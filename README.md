@@ -183,7 +183,7 @@ This action emits debug logs to help troubleshoot deployment failures.  To see t
 
 ## License Summary
 
-This code is made available under the MIT license.
+This code is made available under the MIT-0 license, for details refer to [LICENSE](LICENSE) file.
 
 ## Security Disclosures
 
