@@ -1,0 +1,54 @@
+name: 'Amazon App Runner "Deploy Service" Action for GitHub Actions'
+description: 'Registers and deploys the application as App Runner service'
+branding:
+  icon: 'cloud'
+  color: 'orange'
+inputs:
+  service:
+    description: 'The name of the App Runner service'
+    required: true
+  source-connection-arn:
+    description: 'ARN for the `GitHubConnection` in App Runner'
+    required: false
+  access-role-arn:
+    description: 'ARN for IAM Role, if the App Runner service is configured with ECR image'
+    required: false
+  repo:
+    description: "GitHub source repository URL"
+    required: false
+  branch:
+    description: "Repository branch name"
+    required: false
+  image:
+    description: 'Docker image URI with tag'
+    required: false
+  runtime:
+    description: 'Runtime of the application, note: AppRunner only supports `NODEJS_12` and `PYTHON_3` runtime types'
+    required: true
+  build-command:
+    description: "Application build command"
+    required: false
+  start-command:
+    description: "Application start command"
+    required: false
+  port:
+    description: "The service uses this TCP port"
+    required: false
+  region:
+    description: "AWS deployment region"
+    required: false
+  cpu:
+    description: 'CPU for the service, defaults to 1 vCPU'
+    required: false
+  memory:
+    description: 'Memory for the service, defaults to 2 GB'
+    required: false
+  wait-for-service-stability:
+    description: 'Whether to wait for the App Runner service to reach stable state after deploying the new task definition. Valid value is "true". Will default to not waiting.'
+    required: false
+outputs:
+  service-id:
+    description: 'App Runner service ID'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

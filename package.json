@@ -1,0 +1,46 @@
+{
+  "name": "aws-actions-app-runner-deploy-service",
+  "version": "1.4.7",
+  "description": "Registers and deploys the application as AppRunner service.",
+  "main": "./dist/index.js",
+  "scripts": {
+    "lint": "eslint ./src/*.ts",
+    "package": "node ./esbuild.config.mjs",
+    "test": "npm run lint && jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hariohmprasath/amazon-app-runner-deploy.git"
+  },
+  "keywords": [
+    "AWS",
+    "GitHub",
+    "Actions",
+    "JavaScript"
+  ],
+  "author": "AWS",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hariohmprasath/amazon-app-runner-deploy/issues"
+  },
+  "homepage": "https://github.com/hariohmprasath/amazon-app-runner-deploy#readme",
+  "dependencies": {
+    "@actions/core": "^1.5.0",
+    "@aws-sdk/client-apprunner": "^3.27.0",
+    "@aws-sdk/node-http-handler": "^3.25.0",
+    "yaml": "^1.10.2"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.9",
+    "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.29.2",
+    "@typescript-eslint/parser": "^4.29.2",
+    "esbuild": "^0.12.22",
+    "eslint": "^7.32.0",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.5",
+    "ts-node": "^10.2.1",
+    "type-fest": "^2.1.0",
+    "typescript": "^4.3.5"
+  }
+}
