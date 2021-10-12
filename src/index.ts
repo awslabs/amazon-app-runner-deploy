@@ -88,8 +88,7 @@ export async function run(): Promise<void> {
             // Runtime enum check
             if (!supportedRuntime.includes(runtime))
                 throw new Error(`Unexpected value passed in runtime ${runtime} only supported values are: ${JSON.stringify(supportedRuntime)}`);
-        } else {
-            info("Checking for accessrole:"+accessRoleArn);
+        } else {            
             // IAM Role check for ECR based AppRunner
             if (!accessRoleArn)
                 throw new Error(`Access role ARN is required for ECR based AppRunner`);
