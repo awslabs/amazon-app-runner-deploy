@@ -32,7 +32,7 @@ Source code is application code that App Runner builds and deploys for you. You 
 Here is the sample for deploying a NodeJS based service:
 
 ```yaml
-name: Deploy to App Runner
+name: Deploy to App Runner 
 on:
   push:
     branches: [ master ]
@@ -52,7 +52,7 @@ jobs:
           
       - name: Deploy to App Runner
         id: deploy-apprunner
-        uses: hariohmprasath/amazon-app-runner-deploy@master
+        uses: aws-samples/amazon-app-runner-deploy@main
         with:
           service: app-runner-git-deploy-service
           source-connection-arn: ${{ secrets.AWS_CONNECTION_SOURCE_ARN }}
@@ -121,11 +121,11 @@ jobs:
           
       - name: Deploy to App Runner Image
         id: deploy-apprunner
-        uses: hariohmprasath/amazon-app-runner-deploy@master
+        uses: aws-samples/amazon-app-runner-deploy@main
         with:
           service: app-runner-git-deploy-service
           image: ${{ steps.build-image.outputs.image }}
-          access-role-arn: ${{ secrets.IAM_ROLE_ARN }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
           runtime: NODEJS_12          
           region: us-east-1
           cpu : 1
@@ -139,7 +139,7 @@ jobs:
 **Note:**
 
 - The above example uses github action, to build the docker image, push it to AWS ECR and use the same for App Runner deployment
-- **IAM_ROLE_ARN** is the Amazon Resource Name (ARN) of the IAM role that grants the App Runner service access to a source repository. It's required for ECR image repositories (but not for ECR Public repositories)
+- **ROLE_ARN** is the Amazon Resource Name (ARN) of the IAM role that grants the App Runner service access to a source repository. It's required for ECR image repositories (but not for ECR Public repositories)
 
 ## Credentials and Region
 
