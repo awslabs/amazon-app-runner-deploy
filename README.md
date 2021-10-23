@@ -52,7 +52,7 @@ jobs:
           
       - name: Deploy to App Runner
         id: deploy-apprunner
-        uses: aws-samples/amazon-app-runner-deploy@main
+        uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: app-runner-git-deploy-service
           source-connection-arn: ${{ secrets.AWS_CONNECTION_SOURCE_ARN }}
@@ -121,7 +121,7 @@ jobs:
           
       - name: Deploy to App Runner Image
         id: deploy-apprunner
-        uses: aws-samples/amazon-app-runner-deploy@main
+        uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: app-runner-git-deploy-service
           image: ${{ steps.build-image.outputs.image }}
