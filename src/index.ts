@@ -224,8 +224,12 @@ export async function run(): Promise<void> {
             info(`Service ${serviceId} has started creation. Watch for creation progress in AppRunner console`);
         }
     } catch (error) {
-        setFailed(error.message);
-        debug(error.stack);
+        if (error instanceof Error) {
+            setFailed(error.message);
+            debug(error.stack ?? 'no stack info');
+        } else {
+            setFailed(JSON.stringify(error));
+        }
     }
 }
 
