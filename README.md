@@ -1,6 +1,6 @@
 # Amazon "App Runner Service Deploy" action for GitHub Actions
 
-Registers an Amazon App Runner Service and deploys the application using the source code of a given GitHub repository. Supports both source code and Docker image based service.
+Registers an AWS App Runner Service and deploys the application using the source code of a given GitHub repository. Supports both source code and Docker image based service.
 
 ## Table of Contents
 
