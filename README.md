@@ -126,7 +126,6 @@ jobs:
           service: app-runner-git-deploy-service
           image: ${{ steps.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          runtime: NODEJS_12          
           region: us-east-1
           cpu : 1
           memory : 2

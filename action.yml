@@ -24,7 +24,7 @@ inputs:
     required: false
   runtime:
     description: 'Runtime of the application, note: AppRunner only supports `NODEJS_12` and `PYTHON_3` runtime types'
-    required: true
+    required: false
   build-command:
     description: "Application build command"
     required: false
