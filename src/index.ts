@@ -59,7 +59,7 @@ export async function run(): Promise<void> {
     const accessRoleArn = getInput('access-role-arn', { required: false });
     const repoUrl = getInput('repo', { required: false });
     const imageUri = getInput('image', { required: false });
-    const runtime = getInput('runtime', { required: true });
+    const runtime = getInput('runtime', { required: false });
     const buildCommand = getInput('build-command', { required: false });
     const startCommand = getInput('start-command', { required: false });
     const port = getInputInt('port', 80);
