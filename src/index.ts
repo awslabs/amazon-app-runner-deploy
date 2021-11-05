@@ -138,7 +138,10 @@ export async function run(): Promise<void> {
                     },
                     ImageRepository: {
                         ImageIdentifier: imageUri,
-                        ImageRepositoryType: getImageType(imageUri)
+                        ImageRepositoryType: getImageType(imageUri),
+                        ImageConfiguration: {
+                            Port: `${port}`
+                        }
                     }
                 };
             } else {
@@ -182,7 +185,10 @@ export async function run(): Promise<void> {
                         },
                         ImageRepository: {
                             ImageIdentifier: imageUri,
-                            ImageRepositoryType: getImageType(imageUri)
+                            ImageRepositoryType: getImageType(imageUri),
+                            ImageConfiguration: {
+                                Port: `${port}`
+                            }
                         }
                     }
                 }));
