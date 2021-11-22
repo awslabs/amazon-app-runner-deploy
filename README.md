@@ -9,6 +9,7 @@ Registers an AWS App Runner Service and deploys the application using the source
 - [Usage](#usage)
   - [Code based service](#code-based-service)
   - [Image based service](#image-based-service)
+  - [Environment variables](#environment-variables)
 - [Credentials and Region](#credentials-and-region)
 - [Permissions](#permissions)
 - [Troubleshooting](#troubleshooting)
@@ -139,6 +140,24 @@ jobs:
 
 - The above example uses github action, to build the docker image, push it to AWS ECR and use the same for App Runner deployment
 - **ROLE_ARN** is the Amazon Resource Name (ARN) of the IAM role that grants the App Runner service access to a source repository. It's required for ECR image repositories (but not for ECR Public repositories)
+
+### Environment variables
+To configure environment variables add the following configuration:
+
+```yaml
+- name: Deploy to App Runner Image
+  id: deploy-apprunner
+  uses: awslabs/amazon-app-runner-deploy@main
+  with:
+    # application config omitted
+    environmentVariables: >
+      { 
+        "KEY1": "VALUE1", 
+        "KEY2": "VALUE2" 
+      }
+```
+
+Due to a GitHub Actions limitation you have to provide the environment variables as key-value pairs in JSON format.
 
 ## Credentials and Region
 

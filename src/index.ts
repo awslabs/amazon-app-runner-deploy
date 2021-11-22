@@ -29,6 +29,11 @@ function getInputInt(name: string, defaultValue: number): number {
     return isNaN(result) ? defaultValue : result;
 }
 
+function getEnvironmentVariables() {
+    const json = getInput('environmentVariables', { required: false }) || "{}";
+    return JSON.parse(json);
+}
+
 async function getServiceArn(client: AppRunnerClient, serviceName: string): Promise<string | undefined> {
 
     let nextToken: string | undefined = undefined;
@@ -112,6 +117,9 @@ export async function run(): Promise<void> {
         // Memory - 2
         const memory = getInputInt('memory', 2);
 
+        // Environment variables
+        const environmentVariables = getEnvironmentVariables();
+
         // AppRunner client
         const client = new AppRunnerClient({ region: region });
 
@@ -140,7 +148,8 @@ export async function run(): Promise<void> {
                         ImageIdentifier: imageUri,
                         ImageRepositoryType: getImageType(imageUri),
                         ImageConfiguration: {
-                            Port: `${port}`
+                            Port: `${port}`,
+                            RuntimeEnvironmentVariables: environmentVariables
                         }
                     }
                 };
@@ -163,7 +172,8 @@ export async function run(): Promise<void> {
                                 Runtime: runtime,
                                 BuildCommand: buildCommand,
                                 StartCommand: startCommand,
-                                Port: `${port}`
+                                Port: `${port}`,
+                                RuntimeEnvironmentVariables: environmentVariables
                             }
                         }
                     }
@@ -187,7 +197,8 @@ export async function run(): Promise<void> {
                             ImageIdentifier: imageUri,
                             ImageRepositoryType: getImageType(imageUri),
                             ImageConfiguration: {
-                                Port: `${port}`
+                                Port: `${port}`,
+                                RuntimeEnvironmentVariables: environmentVariables
                             }
                         }
                     }

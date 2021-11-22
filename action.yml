@@ -43,6 +43,9 @@ inputs:
   memory:
     description: 'Memory for the service, defaults to 2 GB'
     required: false
+  environmentVariables:
+    description: 'Environment variables in JSON format'
+    required: false
   wait-for-service-stability:
     description: 'Whether to wait for the App Runner service to reach stable state after deploying the new task definition. Valid value is "true". Will default to not waiting.'
     required: false
