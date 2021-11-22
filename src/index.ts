@@ -29,6 +29,17 @@ function getInputInt(name: string, defaultValue: number): number {
     return isNaN(result) ? defaultValue : result;
 }
 
+function getHealthCheck() {
+    return {
+        Protocol: getInput('HealthCheckProtocol', { required: false }) || 'TCP',
+        Path: getInput('HealthCheckPath', { required: false }) || '/',
+        Interval: getInputInt('HealthCheckInterval', 5),
+        Timeout: getInputInt('HealthCheckTimeout', 2),
+        HealthyThreshold: getInputInt('HealthCheckHealthyThreshold', 1),
+        UnhealthyThreshold: getInputInt('HealthCheckUnhealthyThreshold', 5)
+    }
+}
+
 async function getServiceArn(client: AppRunnerClient, serviceName: string): Promise<string | undefined> {
 
     let nextToken: string | undefined = undefined;
@@ -112,6 +123,9 @@ export async function run(): Promise<void> {
         // Memory - 2
         const memory = getInputInt('memory', 2);
 
+        // Health checks
+        const healthCheck = getHealthCheck();
+
         // AppRunner client
         const client = new AppRunnerClient({ region: region });
 
@@ -128,7 +142,8 @@ export async function run(): Promise<void> {
                     Cpu: `${cpu} vCPU`,
                     Memory: `${memory} GB`,
                 },
-                SourceConfiguration: {}
+                SourceConfiguration: {},
+                HealthCheckConfiguration: healthCheck
             });
             if (isImageBased) {
                 // Image based set docker registry details
@@ -190,7 +205,8 @@ export async function run(): Promise<void> {
                                 Port: `${port}`
                             }
                         }
-                    }
+                    },
+                    HealthCheckConfiguration: healthCheck
                 }));
 
                 serviceId = updateServiceResponse.Service?.ServiceId;

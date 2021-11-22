@@ -43,6 +43,24 @@ inputs:
   memory:
     description: 'Memory for the service, defaults to 2 GB'
     required: false
+  healthCheckProtocol:
+    description: 'The IP protocol that App Runner uses to perform health checks for your service, possible values are TCP or HTTP, defaults to TCP'
+    required: false
+  healthCheckPath:
+    description: 'The URL that health check requests are sent to (only for HTTP based checks), defaults to /'
+    required: false
+  healthCheckInterval:
+    description: 'The time interval, in seconds, between health checks, defaults to 5'
+    required: false
+  healthCheckTimeout:
+    description: 'The time, in seconds, to wait for a health check response before deciding it failed, defaults to 2'
+    required: false
+  healthCheckHealthyThreshold:
+    description: 'The number of consecutive checks that must succeed before App Runner decides that the service is healthy, defaults to 1'
+    required: false
+  healthCheckUnhealthyThreshold:
+    description: 'The number of consecutive checks that must fail before App Runner decides that the service is unhealthy, defaults to 5'
+    required: false
   wait-for-service-stability:
     description: 'Whether to wait for the App Runner service to reach stable state after deploying the new task definition. Valid value is "true". Will default to not waiting.'
     required: false
