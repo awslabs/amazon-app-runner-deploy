@@ -134,6 +134,43 @@ describe('Deploy to AppRunner', () => {
         expect(infoMock).toBeCalledWith(`Service ${SERVICE_ID} has started creation. Watch for creation progress in AppRunner console`);
     });
 
+    test('update app runner with source code configuration', async () => {
+        const inputConfig: FakeInput = {
+            service: SERVICE_NAME,
+            "source-connection-arn": SOURCE_ARN_CONNECTION,
+            repo: REPO,
+            runtime: RUNTIME,
+            "build-command": BUILD_COMMAND,
+            "start-command": START_COMMAND,
+            port: PORT,
+            "wait-for-service-stability": 'false',
+        };
+
+        getInputMock.mockImplementation((name) => {
+            return getFakeInput(inputConfig, name);
+        });
+
+        const sendConfig: ICommandConfig = {
+            listServicesCommand: [{
+                NextToken: undefined,
+                ServiceSummaryList: [{
+                    ServiceName: SERVICE_NAME,
+                    ServiceArn: SERVICE_ARN,
+                }]
+            }],
+            updateServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
+        }
+        mockSendDef.mockImplementation((command) => {
+            return getFakeCommandOutput(sendConfig, command.input, commandLog);
+        });
+
+        await run();
+
+        expect(setFailedMock).not.toHaveBeenCalled();
+        expect(setOutputMock).toHaveBeenNthCalledWith(1, 'service-id', SERVICE_ID);
+        expect(infoMock).toBeCalledWith(`Service ${SERVICE_ID} has started creation. Watch for creation progress in AppRunner console`);
+    });
+
     test('update app runner with pagination', async () => {
         const inputConfig: FakeInput = {
             service: SERVICE_NAME,
