@@ -175,28 +175,52 @@ export async function run(): Promise<void> {
             serviceArn = createServiceResponse.Service?.ServiceArn;
         } else {
             info(`Updating existing service ${serviceName}`);
+            const command = new UpdateServiceCommand({
+                ServiceArn: serviceArn,
+                SourceConfiguration: {}
+            });
             if (isImageBased) {
                 // Update only in case of docker registry based service
-                const updateServiceResponse = await client.send(new UpdateServiceCommand({
-                    ServiceArn: serviceArn,
-                    SourceConfiguration: {
-                        AuthenticationConfiguration: {
-                            AccessRoleArn: accessRoleArn
+                command.input.SourceConfiguration = {
+                    AuthenticationConfiguration: {
+                        AccessRoleArn: accessRoleArn
+                    },
+                    ImageRepository: {
+                        ImageIdentifier: imageUri,
+                        ImageRepositoryType: getImageType(imageUri),
+                        ImageConfiguration: {
+                            Port: `${port}`
+                        }
+                    }
+                }
+            } else {
+                // Source code based set source code details
+                command.input.SourceConfiguration = {
+                    AuthenticationConfiguration: {
+                        ConnectionArn: sourceConnectionArn
+                    },
+                    CodeRepository: {
+                        RepositoryUrl: repoUrl,
+                        SourceCodeVersion: {
+                            Type: "BRANCH",
+                            Value: branch
                         },
-                        ImageRepository: {
-                            ImageIdentifier: imageUri,
-                            ImageRepositoryType: getImageType(imageUri),
-                            ImageConfiguration: {
+                        CodeConfiguration: {
+                            ConfigurationSource: "API",
+                            CodeConfigurationValues: {
+                                Runtime: runtime,
+                                BuildCommand: buildCommand,
+                                StartCommand: startCommand,
                                 Port: `${port}`
                             }
                         }
                     }
-                }));
-
-                serviceId = updateServiceResponse.Service?.ServiceId;
-                info(`Service update initiated with operation ID - ${serviceId}`);
-                serviceArn = updateServiceResponse.Service?.ServiceArn;
+                };
             }
+            const updateServiceResponse = await client.send(command);
+            serviceId = updateServiceResponse.Service?.ServiceId;
+            info(`Service update initiated with operation ID - ${serviceId}`)
+            serviceArn = updateServiceResponse.Service?.ServiceArn;
         }
 
         // Set output
