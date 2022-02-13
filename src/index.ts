@@ -1,6 +1,6 @@
 
 import { getInput, info, setFailed, setOutput } from "@actions/core";
-import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListOperationsCommand, OperationType, OperationStatus } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
 
 const supportedRuntime = ['NODEJS_12', 'PYTHON_3'];
@@ -120,6 +120,8 @@ export async function run(): Promise<void> {
 
         // New service or update to existing service
         let serviceId: string | undefined = undefined;
+        // OperationId when updating
+        let operationId: string | undefined = undefined;
         if (!serviceArn) {
             info(`Creating service ${serviceName}`);
             const command = new CreateServiceCommand({
@@ -219,6 +221,7 @@ export async function run(): Promise<void> {
             }
             const updateServiceResponse = await client.send(command);
             serviceId = updateServiceResponse.Service?.ServiceId;
+            operationId = updateServiceResponse.OperationId;
             info(`Service update initiated with operation ID - ${serviceId}`)
             serviceArn = updateServiceResponse.Service?.ServiceArn;
         }
@@ -248,8 +251,29 @@ export async function run(): Promise<void> {
             // Throw error if service has not reached an end state
             if (attempts >= MAX_ATTEMPTS)
                 throw new Error(`Service did not reach stable state after ${attempts} attempts`);
-            else
-                info(`Service ${serviceId} has reached the stable state ${status}`);
+            else {
+
+                // If operationId is set check if operation suceeded
+                if(operationId){
+                    const listOperationsResponse = await client.send(new ListOperationsCommand({
+                        ServiceArn: serviceArn
+                    }))
+
+                    for(let i = 0; i < listOperationsResponse.OperationSummaryList.length; i++){
+                        if(listOperationsResponse.OperationSummaryList[i].Id === operationId){
+                            if(listOperationsResponse.OperationSummaryList[i].Status !== OperationStatus.SUCCEEDED)
+                                setFailed(`Operation ${operationId} for Service ${serviceId} could not be deployed. Error: ${listOperationsResponse.OperationSummaryList[i].Status}`)
+                            else 
+                                info(`Service ${serviceId} has reached the stable state ${status}`);                                
+                            break;
+                        }
+                    }
+
+
+                } else {
+                    info(`Service ${serviceId} has reached the stable state ${status}`);
+                }
+            }
         } else {
             info(`Service ${serviceId} has started creation. Watch for creation progress in AppRunner console`);
         }
