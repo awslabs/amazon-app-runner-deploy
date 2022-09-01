@@ -3,7 +3,8 @@ import { getInput, info, setFailed, setOutput } from "@actions/core";
 import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
 
-const supportedRuntime = ['NODEJS_12', 'PYTHON_3'];
+//https://docs.aws.amazon.com/apprunner/latest/api/API_CodeConfigurationValues.html
+const supportedRuntime = ['NODEJS_12', 'PYTHON_3', 'NODEJS_14', 'CORRETTO_8', 'CORRETTO_11'];
 
 const OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS";
 const MAX_ATTEMPTS = 120;

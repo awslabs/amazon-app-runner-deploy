@@ -23,7 +23,7 @@ inputs:
     description: 'Docker image URI with tag'
     required: false
   runtime:
-    description: 'Runtime of the application, note: AppRunner only supports `NODEJS_12` and `PYTHON_3` runtime types'
+    description: 'Runtime of the application, note: AppRunner only supports the following runtime types: PYTHON_3 | NODEJS_12 | NODEJS_14 | CORRETTO_8 | CORRETTO_11'
     required: false
   build-command:
     description: "Application build command"
