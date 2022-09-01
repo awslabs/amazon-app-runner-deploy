@@ -27,7 +27,7 @@ See [action.yml](action.yml) for the full documentation for this action's inputs
 
 Source code is application code that App Runner builds and deploys for you. You point App Runner to a source code repository and choose a suitable runtime. App Runner builds an image that's based on the base image of the runtime and your application code. It then starts a service that runs a container based on this image.
 
-> Note: Only NodeJS and Python based services are supported.
+> Note: Only NodeJS, Python, and Java based services are supported.
 
 Here is the sample for deploying a NodeJS based service:
 
@@ -58,7 +58,7 @@ jobs:
           source-connection-arn: ${{ secrets.AWS_CONNECTION_SOURCE_ARN }}
           repo: https://github.com/${{ github.repository }}
           branch: ${{ github.ref }}
-          runtime: NODEJS_12
+          runtime: NODEJS_14
           build-command: npm install
           start-command: npm start
           port: 18000
