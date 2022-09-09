@@ -4,7 +4,7 @@ build({
     entryPoints: [ "./src/index.js" ],
     bundle: true,
     platform: 'node',
-    target: 'node12',
+    target: 'node16',
     outdir: './dist',
     minify: true,
     mainFields: ['module', 'main'],

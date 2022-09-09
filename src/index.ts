@@ -54,6 +54,30 @@ async function getServiceArn(client: AppRunnerClient, serviceName: string): Prom
     return undefined;
 }
 
+export interface ICodeConfiguration {
+    sourceType: 'code';
+    repoUrl: string;
+    branch: string;
+    sourceConnectionArn: string;
+    runtime: string;
+    buildCommand: string;
+    startCommand: string;
+}
+
+export interface IImageConfiguration {
+    sourceType: 'image';
+    imageUri: string;
+    accessRoleArn: string;
+}
+
+export interface IActionInputs {
+    serviceName: string;
+    sourceConfig: ICodeConfiguration | IImageConfiguration;
+    port: number;
+    waitForService: boolean;
+    region: string;
+}
+
 export async function run(): Promise<void> {
     const serviceName = getInput('service', { required: true });
     const sourceConnectionArn = getInput('source-connection-arn', { required: false });

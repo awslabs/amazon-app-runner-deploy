@@ -1,4 +1,13 @@
 
+import { jest, expect, test, describe } from '@jest/globals';
+import { getInput, info, setFailed, setOutput } from '@actions/core';
+import { run } from '.';
+import { FakeInput, getFakeInput } from './test-helpers/fake-input';
+import { CommandLog, getFakeCommandOutput, ICommandConfig } from './test-helpers/app-runner-commands';
+import { AppRunnerClient, CreateServiceCommand, DescribeServiceCommand, ListServicesCommand, UpdateServiceCommand } from '@aws-sdk/client-apprunner';
+
+// type TypeOfClassMethod<T, M extends keyof T> = T[M] extends Function ? T[M] : never;
+
 jest.mock('@actions/core');
 
 const SERVICE_ID = "serviceId";
@@ -13,30 +22,25 @@ const BUILD_COMMAND = "build-command";
 const START_COMMAND = "start-command";
 const PORT = "80";
 
-const mockSendDef = jest.fn();
+const mockSendDef = jest.fn<typeof AppRunnerClient.prototype.send>();
 jest.mock('@aws-sdk/client-apprunner', () => {
-    const appRunnerClient = {
-        send: mockSendDef,
-    }
     return {
-        ...jest.requireActual('@aws-sdk/client-apprunner'),
-        AppRunnerClient: jest.fn(() => appRunnerClient),
+        ...jest.requireActual('@aws-sdk/client-apprunner') as Record<string, unknown>,
+        AppRunnerClient: jest.fn(() => {
+            return {
+                send: mockSendDef,
+            };
+        }),
     }
 });
-
-import { mocked } from 'ts-jest/utils';
-import { getInput, info, setFailed, setOutput } from '@actions/core';
-import { run } from '.';
-import { FakeInput, getFakeInput } from './test-helpers/fake-input';
-import { CommandLog, getFakeCommandOutput, ICommandConfig } from './test-helpers/app-runner-commands';
 
 
 describe('Deploy to AppRunner', () => {
 
-    const getInputMock = mocked(getInput);
-    const setFailedMock = mocked(setFailed);
-    const setOutputMock = mocked(setOutput);
-    const infoMock = mocked(info);
+    const getInputMock = jest.mocked(getInput);
+    const setFailedMock = jest.mocked(setFailed);
+    const setOutputMock = jest.mocked(setOutput);
+    const infoMock = jest.mocked(info);
 
     const commandLog = new CommandLog();
 
@@ -65,7 +69,7 @@ describe('Deploy to AppRunner', () => {
             listServicesCommand: [{ NextToken: undefined, ServiceSummaryList: [] }],
             createServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
         }
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | CreateServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 
@@ -91,7 +95,7 @@ describe('Deploy to AppRunner', () => {
             listServicesCommand: [{ NextToken: undefined, ServiceSummaryList: [] }],
             createServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
         }
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | CreateServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 
@@ -123,7 +127,7 @@ describe('Deploy to AppRunner', () => {
             }],
             updateServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
         }
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | UpdateServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 
@@ -160,7 +164,7 @@ describe('Deploy to AppRunner', () => {
             }],
             updateServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
         }
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | UpdateServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 
@@ -194,7 +198,7 @@ describe('Deploy to AppRunner', () => {
             }],
             updateServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
         }
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | UpdateServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 
@@ -226,7 +230,7 @@ describe('Deploy to AppRunner', () => {
             createServiceCommand: [{ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, } }],
             describeServiceCommand: [{ Service: { Status: "CREATION_COMPLETE" } }],
         };
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | CreateServiceCommand | DescribeServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 
@@ -346,7 +350,7 @@ describe('Deploy to AppRunner', () => {
             listServicesCommand: [{ NextToken: undefined, ServiceSummaryList: [] }],
             createServiceCommand: [{ Service: { ServiceId: SERVICE_ID } }],
         }
-        mockSendDef.mockImplementation((command) => {
+        mockSendDef.mockImplementation(async (command: ListServicesCommand | CreateServiceCommand) => {
             return getFakeCommandOutput(sendConfig, command.input, commandLog);
         });
 

@@ -1,8 +1,20 @@
-import { CreateServiceCommandInput, CreateServiceCommandOutput, DescribeServiceCommandInput, DescribeServiceCommandOutput, ListServicesCommandInput, ListServicesCommandOutput, UpdateServiceCommandInput, UpdateServiceCommandOutput } from "@aws-sdk/client-apprunner";
+import {
+    CreateServiceCommandInput,
+    CreateServiceCommandOutput,
+    DescribeServiceCommandInput,
+    DescribeServiceCommandOutput,
+    ListServicesCommandInput,
+    ListServicesCommandOutput,
+    UpdateServiceCommandInput,
+    UpdateServiceCommandOutput
+} from "@aws-sdk/client-apprunner";
 import { PartialDeep } from "type-fest";
 
-type ExpectedCommandInputs = CreateServiceCommandInput | UpdateServiceCommandInput | DescribeServiceCommandInput | ListServicesCommandInput;
-
+type ExpectedCommandInputs =
+    | CreateServiceCommandInput
+    | DescribeServiceCommandInput
+    | UpdateServiceCommandInput
+    | ListServicesCommandInput;
 class AppRunnerClientCommands {
     static isCreateServiceCommand(input: ExpectedCommandInputs): input is CreateServiceCommandInput {
         return (input as CreateServiceCommandInput).ServiceName !== undefined;

@@ -50,5 +50,5 @@ outputs:
   service-id:
     description: 'App Runner service ID'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
