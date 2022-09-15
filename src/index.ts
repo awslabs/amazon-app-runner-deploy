@@ -1,10 +1,9 @@
 
-import { getInput, info, setFailed, setOutput } from "@actions/core";
-import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType } from "@aws-sdk/client-apprunner";
+import { info, setFailed, setOutput } from "@actions/core";
+import { AppRunnerClient, ListServicesCommand, ListServicesCommandOutput, DescribeServiceCommand } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
-
-//https://docs.aws.amazon.com/apprunner/latest/api/API_CodeConfigurationValues.html
-const supportedRuntime = ['NODEJS_12', 'PYTHON_3', 'NODEJS_14', 'CORRETTO_8', 'CORRETTO_11'];
+import { getConfig } from "./configuration";
+import { getCreateCommand, getUpdateCommand } from "./commands";
 
 const OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS";
 const MAX_ATTEMPTS = 120;
@@ -12,22 +11,6 @@ const MAX_ATTEMPTS = 120;
 // Wait in milliseconds (helps to implement exponential retries)
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Determine ECR image repository type
-function getImageType(imageUri: string) {
-    return imageUri.startsWith("public.ecr") ? ImageRepositoryType.ECR_PUBLIC : ImageRepositoryType.ECR
-}
-
-function getInputInt(name: string, defaultValue: number): number {
-    const val = getInput(name, { required: false });
-    if (!val) {
-        return defaultValue;
-    }
-
-    const result = Number.parseInt(val);
-
-    return isNaN(result) ? defaultValue : result;
 }
 
 async function getServiceArn(client: AppRunnerClient, serviceName: string): Promise<string | undefined> {
@@ -54,194 +37,30 @@ async function getServiceArn(client: AppRunnerClient, serviceName: string): Prom
     return undefined;
 }
 
-export interface ICodeConfiguration {
-    sourceType: 'code';
-    repoUrl: string;
-    branch: string;
-    sourceConnectionArn: string;
-    runtime: string;
-    buildCommand: string;
-    startCommand: string;
-}
-
-export interface IImageConfiguration {
-    sourceType: 'image';
-    imageUri: string;
-    accessRoleArn: string;
-}
-
-export interface IActionInputs {
-    serviceName: string;
-    sourceConfig: ICodeConfiguration | IImageConfiguration;
-    port: number;
-    waitForService: boolean;
-    region: string;
-}
-
 export async function run(): Promise<void> {
-    const serviceName = getInput('service', { required: true });
-    const sourceConnectionArn = getInput('source-connection-arn', { required: false });
-    const accessRoleArn = getInput('access-role-arn', { required: false });
-    const repoUrl = getInput('repo', { required: false });
-    const imageUri = getInput('image', { required: false });
-    const runtime = getInput('runtime', { required: false });
-    const buildCommand = getInput('build-command', { required: false });
-    const startCommand = getInput('start-command', { required: false });
-    const port = getInputInt('port', 80);
-    const waitForService = getInput('wait-for-service-stability', { required: false }) || "false";
 
     try {
-        // Check for service type
-        const isImageBased = !!imageUri;
 
-        // Validations - AppRunner Service name
-        if (!serviceName)
-            throw new Error('AppRunner service name cannot be empty');
-
-        // Image URI required if the service is docker registry based
-        if (isImageBased && repoUrl)
-            throw new Error('Either docker image registry or code repository expected, not both');
-
-        // Mandatory check for source code based AppRunner
-        if (!isImageBased) {
-            if (!sourceConnectionArn || !repoUrl || !runtime
-                || !buildCommand
-                || !startCommand)
-                throw new Error('Connection ARN, Repository URL, Runtime, build and start command are expected');
-
-
-            // Runtime enum check
-            if (!supportedRuntime.includes(runtime))
-                throw new Error(`Unexpected value passed in runtime ${runtime} only supported values are: ${JSON.stringify(supportedRuntime)}`);
-        } else {            
-            // IAM Role check for ECR based AppRunner
-            if (!accessRoleArn)
-                throw new Error(`Access role ARN is required for ECR based AppRunner`);
-        }
-
-        // Defaults
-        // Region - us-east-1
-        const region = getInput('region', { required: false }) || 'us-east-1';
-
-        // Branch - master
-        let branch = getInput('branch', { required: false }) || 'master';
-
-        // Get branch details from refs
-        if (branch.startsWith("refs/")) {
-            branch = branch.split("/")[2];
-        }
-
-        // CPU - 1
-        const cpu = getInputInt('cpu', 1);
-
-        // Memory - 2
-        const memory = getInputInt('memory', 2);
+        const config = getConfig();
 
         // AppRunner client
-        const client = new AppRunnerClient({ region: region });
+        const client = new AppRunnerClient({ region: config.region });
 
         // Check whether service exists and get ServiceArn
-        let serviceArn = await getServiceArn(client, serviceName);
+        let serviceArn = await getServiceArn(client, config.serviceName);
 
         // New service or update to existing service
         let serviceId: string | undefined = undefined;
         if (!serviceArn) {
-            info(`Creating service ${serviceName}`);
-            const command = new CreateServiceCommand({
-                ServiceName: serviceName,
-                InstanceConfiguration: {
-                    Cpu: `${cpu} vCPU`,
-                    Memory: `${memory} GB`,
-                },
-                SourceConfiguration: {}
-            });
-            if (isImageBased) {
-                // Image based set docker registry details
-                command.input.SourceConfiguration = {
-                    AuthenticationConfiguration: {
-                        AccessRoleArn: accessRoleArn
-                    },
-                    ImageRepository: {
-                        ImageIdentifier: imageUri,
-                        ImageRepositoryType: getImageType(imageUri),
-                        ImageConfiguration: {
-                            Port: `${port}`
-                        }
-                    }
-                };
-            } else {
-                // Source code based set source code details
-                command.input.SourceConfiguration = {
-                    AuthenticationConfiguration: {
-                        ConnectionArn: sourceConnectionArn
-                    },
-                    AutoDeploymentsEnabled: true,
-                    CodeRepository: {
-                        RepositoryUrl: repoUrl,
-                        SourceCodeVersion: {
-                            Type: "BRANCH",
-                            Value: branch
-                        },
-                        CodeConfiguration: {
-                            ConfigurationSource: "API",
-                            CodeConfigurationValues: {
-                                Runtime: runtime,
-                                BuildCommand: buildCommand,
-                                StartCommand: startCommand,
-                                Port: `${port}`
-                            }
-                        }
-                    }
-                };
-            }
+            info(`Creating service ${config.serviceName}`);
+            const command = getCreateCommand(config);
             const createServiceResponse = await client.send(command);
             serviceId = createServiceResponse.Service?.ServiceId;
             info(`Service creation initiated with service ID - ${serviceId}`)
             serviceArn = createServiceResponse.Service?.ServiceArn;
         } else {
-            info(`Updating existing service ${serviceName}`);
-            const command = new UpdateServiceCommand({
-                ServiceArn: serviceArn,
-                SourceConfiguration: {}
-            });
-            if (isImageBased) {
-                // Update only in case of docker registry based service
-                command.input.SourceConfiguration = {
-                    AuthenticationConfiguration: {
-                        AccessRoleArn: accessRoleArn
-                    },
-                    ImageRepository: {
-                        ImageIdentifier: imageUri,
-                        ImageRepositoryType: getImageType(imageUri),
-                        ImageConfiguration: {
-                            Port: `${port}`
-                        }
-                    }
-                }
-            } else {
-                // Source code based set source code details
-                command.input.SourceConfiguration = {
-                    AuthenticationConfiguration: {
-                        ConnectionArn: sourceConnectionArn
-                    },
-                    CodeRepository: {
-                        RepositoryUrl: repoUrl,
-                        SourceCodeVersion: {
-                            Type: "BRANCH",
-                            Value: branch
-                        },
-                        CodeConfiguration: {
-                            ConfigurationSource: "API",
-                            CodeConfigurationValues: {
-                                Runtime: runtime,
-                                BuildCommand: buildCommand,
-                                StartCommand: startCommand,
-                                Port: `${port}`
-                            }
-                        }
-                    }
-                };
-            }
+            info(`Updating existing service ${config.serviceName}`);
+            const command = getUpdateCommand(serviceArn, config);
             const updateServiceResponse = await client.send(command);
             serviceId = updateServiceResponse.Service?.ServiceId;
             info(`Service update initiated with operation ID - ${serviceId}`)
@@ -252,7 +71,7 @@ export async function run(): Promise<void> {
         setOutput('service-id', serviceId);
 
         // Wait for service to be stable (if required)
-        if (waitForService === "true") {
+        if (config.waitForService) {
             let attempts = 0;
             let status = OPERATION_IN_PROGRESS;
             info(`Waiting for the service ${serviceId} to reach stable state`);

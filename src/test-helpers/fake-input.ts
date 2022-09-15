@@ -1,3 +1,4 @@
+import { InputOptions } from "@actions/core";
 
 export interface FakeInput {
     service?: string;
@@ -16,10 +17,14 @@ export interface FakeInput {
     memory?: string;
 }
 
-export function getFakeInput(config: FakeInput, name: string): string {
+export function getFakeInput(config: FakeInput, name: string, options?: InputOptions): string {
     if (Object.keys(config).includes(name)) {
         return (config as { [key: string]: string })[name];
     } else {
-        return '';
+        if (options?.required) {
+            throw new Error(`${name} is required`);
+        } else {
+            return '';
+        }
     }
 }

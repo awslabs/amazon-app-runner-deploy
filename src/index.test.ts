@@ -282,8 +282,8 @@ describe('Deploy to AppRunner', () => {
             "wait-for-service-stability": 'true',
         };
 
-        getInputMock.mockImplementation((name) => {
-            return getFakeInput(inputConfig, name);
+        getInputMock.mockImplementation((name, options) => {
+            return getFakeInput(inputConfig, name, options);
         });
 
         await run();
@@ -319,8 +319,8 @@ describe('Deploy to AppRunner', () => {
             image: DOCKER_IMAGE,
         };
 
-        getInputMock.mockImplementation((name) => {
-            return getFakeInput(inputConfig, name);
+        getInputMock.mockImplementation((name, options) => {
+            return getFakeInput(inputConfig, name, options);
         });
 
         await run();
