@@ -227,6 +227,7 @@ export async function run(): Promise<void> {
         // Set output
         const serviceId = service?.ServiceId;
         setOutput('service-id', serviceId);
+        setOutput('service-url', service?.ServiceUrl);
 
         // Wait for service to be stable (if required)
         if (waitForService === "true") {
