@@ -1,8 +1,8 @@
 
 import { info, setFailed, setOutput } from "@actions/core";
-import { AppRunnerClient, ListServicesCommand, ListServicesCommandOutput, DescribeServiceCommand } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, ListServicesCommand, ListServicesCommandOutput, DescribeServiceCommand, Service } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
-import { getConfig } from "./configuration";
+import { getConfig, IActionParams } from "./configuration";
 import { getCreateCommand, getUpdateCommand } from "./commands";
 
 const OPERATION_IN_PROGRESS = "OPERATION_IN_PROGRESS";
@@ -37,6 +37,43 @@ async function getServiceArn(client: AppRunnerClient, serviceName: string): Prom
     return undefined;
 }
 
+async function createOrUpdateService(client: AppRunnerClient, config: IActionParams, serviceArn?: string): Promise<Service | undefined> {
+    if (!serviceArn) {
+        info(`Creating service ${config.serviceName}`);
+        const command = getCreateCommand(config);
+        const createServiceResponse = await client.send(command);
+        return createServiceResponse.Service;
+    } else {
+        info(`Updating existing service ${config.serviceName}`);
+        const command = getUpdateCommand(serviceArn, config);
+        const updateServiceResponse = await client.send(command);
+        return updateServiceResponse.Service;
+    }
+}
+
+async function waitToStabilize(client: AppRunnerClient, serviceId: string, serviceArn: string, timeoutSeconds: number): Promise<void> {
+    let elapsedSeconds = 0;
+    let status = OPERATION_IN_PROGRESS;
+    info(`Waiting for the service ${serviceId} to reach stable state`);
+    while (status === OPERATION_IN_PROGRESS && elapsedSeconds < timeoutSeconds) {
+        const describeServiceResponse = await client.send(new DescribeServiceCommand({
+            ServiceArn: serviceArn
+        }));
+
+        status = describeServiceResponse.Service?.Status ?? OPERATION_IN_PROGRESS;
+        if (status !== OPERATION_IN_PROGRESS) {
+            info(`Service ${serviceId} has reached the stable state ${status}`);
+            return;
+        }
+
+        // Wait for 1 second and re-try
+        await sleep(1000);
+        ++elapsedSeconds;
+    }
+
+    throw new Error(`Service did not reach stable state after ${elapsedSeconds} seconds`);
+}
+
 export async function run(): Promise<void> {
 
     try {
@@ -47,55 +84,40 @@ export async function run(): Promise<void> {
         const client = new AppRunnerClient({ region: config.region });
 
         // Check whether service exists and get ServiceArn
-        let serviceArn = await getServiceArn(client, config.serviceName);
+        const existingServiceArn = await getServiceArn(client, config.serviceName);
 
-        // New service or update to existing service
-        let serviceId: string | undefined = undefined;
-        if (!serviceArn) {
-            info(`Creating service ${config.serviceName}`);
-            const command = getCreateCommand(config);
-            const createServiceResponse = await client.send(command);
-            serviceId = createServiceResponse.Service?.ServiceId;
-            info(`Service creation initiated with service ID - ${serviceId}`)
-            serviceArn = createServiceResponse.Service?.ServiceArn;
+        const service = await createOrUpdateService(client, config, existingServiceArn);
+        if (!service) {
+            setFailed(`Failed to create or update service ${config.serviceName} - App Runner Client returned an empty response`);
+            return;
+        }
+
+        const serviceId = service.ServiceId;
+        if (!serviceId) {
+            setFailed(`App Runner Client returned an empty ServiceId for ${config.serviceName}`);
+            return;
         } else {
-            info(`Updating existing service ${config.serviceName}`);
-            const command = getUpdateCommand(serviceArn, config);
-            const updateServiceResponse = await client.send(command);
-            serviceId = updateServiceResponse.Service?.ServiceId;
-            info(`Service update initiated with operation ID - ${serviceId}`)
-            serviceArn = updateServiceResponse.Service?.ServiceArn;
+            info(`Service ID: ${serviceId}`);
+        }
+
+        const serviceArn = service.ServiceArn;
+        if (!serviceArn) {
+            setFailed(`App Runner Client returned an empty ServiceArn for ${config.serviceName}`);
+            return;
+        } else {
+            info(`Service ARN: ${serviceArn}`);
         }
 
         // Set output
         setOutput('service-id', serviceId);
+        setOutput('service-arn', serviceArn);
+        setOutput('service-url', service.ServiceUrl);
 
         // Wait for service to be stable (if required)
         if (config.waitForService) {
-            let attempts = 0;
-            let status = OPERATION_IN_PROGRESS;
-            info(`Waiting for the service ${serviceId} to reach stable state`);
-            while (status === OPERATION_IN_PROGRESS && attempts < MAX_ATTEMPTS) {
-                const describeServiceResponse = await client.send(new DescribeServiceCommand({
-                    ServiceArn: serviceArn
-                }));
-
-                status = describeServiceResponse.Service?.Status ?? OPERATION_IN_PROGRESS;
-                if (status !== OPERATION_IN_PROGRESS)
-                    break;
-
-                // Wait for 5 seconds and re-try
-                await sleep(5000);
-                attempts++;
-            }
-
-            // Throw error if service has not reached an end state
-            if (attempts >= MAX_ATTEMPTS)
-                throw new Error(`Service did not reach stable state after ${attempts} attempts`);
-            else
-                info(`Service ${serviceId} has reached the stable state ${status}`);
+            await waitToStabilize(client, serviceId, serviceArn, MAX_ATTEMPTS * 5);
         } else {
-            info(`Service ${serviceId} has started creation. Watch for creation progress in AppRunner console`);
+            info(`Service ${service.ServiceId} has started an update. Watch for its progress in the AppRunner console`);
         }
     } catch (error) {
         if (error instanceof Error) {
