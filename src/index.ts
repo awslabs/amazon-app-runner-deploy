@@ -1,6 +1,6 @@
 
 import { getInput, info, setFailed, setOutput } from "@actions/core";
-import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType, Service } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
 
 //https://docs.aws.amazon.com/apprunner/latest/api/API_CodeConfigurationValues.html
@@ -120,7 +120,7 @@ export async function run(): Promise<void> {
         let serviceArn = await getServiceArn(client, serviceName);
 
         // New service or update to existing service
-        let serviceId: string | undefined = undefined;
+        let service: Service | undefined = undefined;
         if (!serviceArn) {
             info(`Creating service ${serviceName}`);
             const command = new CreateServiceCommand({
@@ -171,8 +171,8 @@ export async function run(): Promise<void> {
                 };
             }
             const createServiceResponse = await client.send(command);
-            serviceId = createServiceResponse.Service?.ServiceId;
-            info(`Service creation initiated with service ID - ${serviceId}`)
+            service = createServiceResponse.Service;
+            info(`Service creation initiated with service ID - ${service?.ServiceId}`)
             serviceArn = createServiceResponse.Service?.ServiceArn;
         } else {
             info(`Updating existing service ${serviceName}`);
@@ -219,13 +219,15 @@ export async function run(): Promise<void> {
                 };
             }
             const updateServiceResponse = await client.send(command);
-            serviceId = updateServiceResponse.Service?.ServiceId;
-            info(`Service update initiated with operation ID - ${serviceId}`)
+            service = updateServiceResponse.Service;
+            info(`Service update initiated with operation ID - ${service?.ServiceId}`)
             serviceArn = updateServiceResponse.Service?.ServiceArn;
         }
 
         // Set output
+        const serviceId = service?.ServiceId;
         setOutput('service-id', serviceId);
+        setOutput('service-url', service?.ServiceUrl);
 
         // Wait for service to be stable (if required)
         if (waitForService === "true") {
