@@ -17,11 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **BREAKING CHANGE**: The default branch name is now `main`.
-- Action runs on Node16.
-- Update all NPM module references.
-- Refactor code to be compatible with future enhancements and updates.
-- Log messages.
+- **BREAKING CHANGE**: Action migrated to run on Node16.
+- **BREAKING CHANGE**: Update all NPM module references, including major version upgrades.
+- **BREAKING CHANGE**: Refactor code to be compatible with future enhancements and updates.
+- **BREAKING CHANGE**: Log messages changed to match the new refactored code structure.
 - Supported runtime list is no longer hardcoded, but automatically synchronized with the one, defined by [AppRunner Client SDK](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-apprunner/enums/runtime.html), so that new runtime identifier will become available with AWS SDK NPM module updates.
+- Mark `wait-for-service-stability` as obsolete.
 
 ### Fixed
 
