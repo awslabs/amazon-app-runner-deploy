@@ -1,6 +1,12 @@
 import { getInput } from "@actions/core";
 import { Runtime } from "@aws-sdk/client-apprunner";
 
+// supported GitHub action modes
+enum Actions {
+    // Create a new service or update an existing one
+    CreateOrUpdate = 'create_or_update',
+}
+
 export interface ICodeConfiguration {
     sourceType: 'code';
     repoUrl: string;
@@ -17,17 +23,13 @@ export interface IImageConfiguration {
     accessRoleArn: string;
 }
 
-enum Actions {
-    CreateOrUpdate = 'create_or_update',
-}
-
 export interface ICreateOrUpdateActionParams {
     action: Actions.CreateOrUpdate;
     serviceName: string;
     sourceConfig: ICodeConfiguration | IImageConfiguration;
     port: number;
     waitForService: boolean;
-    waitTimeout?: number;
+    waitTimeout: number;
     region: string;
     cpu: number;
     memory: number;
@@ -120,8 +122,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         serviceName,
         region,
         port,
-        waitForService,
-        waitTimeout,
+        waitForService: waitForService || !!waitTimeout,
+        waitTimeout: waitTimeout ?? 600,
         cpu,
         memory,
         sourceConfig: (imageUri) ? getImageConfig(imageUri) : getSourceCodeConfig(),

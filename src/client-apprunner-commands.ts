@@ -1,5 +1,5 @@
 import { CreateServiceCommand, ImageRepositoryType, SourceConfiguration, UpdateServiceCommand } from "@aws-sdk/client-apprunner";
-import { ICodeConfiguration, ICreateOrUpdateActionParams, IImageConfiguration } from "./configuration";
+import { ICodeConfiguration, ICreateOrUpdateActionParams, IImageConfiguration } from "./action-configuration";
 
 export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateServiceCommand {
     return new CreateServiceCommand({
