@@ -70,3 +70,5 @@ typings/
 #
 cloudformation.schema.json
 sam.schema.json
+
+.DS_Store

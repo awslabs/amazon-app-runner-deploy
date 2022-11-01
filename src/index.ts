@@ -1,4 +1,3 @@
-
 import { info, setFailed, setOutput } from "@actions/core";
 import { AppRunnerClient } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';

@@ -6,14 +6,12 @@ import { FakeInput, getFakeInput } from './test-helpers/fake-input';
 import { CommandLog, getFakeCommandOutput, ICommandConfig } from './test-helpers/app-runner-commands';
 import { AppRunnerClient, CreateServiceCommand, DescribeServiceCommand, ListServicesCommand, UpdateServiceCommand } from '@aws-sdk/client-apprunner';
 
-// type TypeOfClassMethod<T, M extends keyof T> = T[M] extends Function ? T[M] : never;
-
 jest.mock('@actions/core');
 
 const SERVICE_ID = "serviceId";
+const SERVICE_URL = "xxxxx.awsapprunner.com";
 const SERVICE_NAME = "serviceName";
 const SERVICE_ARN = "serviceArn";
-const SERVICE_URL = "xxxxx.awsapprunner.com";
 const SOURCE_ARN_CONNECTION = "sourceArnConnection";
 const ACCESS_ROLE_ARN = "accessRoleArn";
 const REPO = "repo";
