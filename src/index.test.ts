@@ -13,6 +13,7 @@ const RUNTIME = "NODEJS_12";
 const BUILD_COMMAND = "build-command";
 const START_COMMAND = "start-command";
 const PORT = "80";
+const ENVIRONMENT_VARIABLES = "{ \"TEST_ENV\": \"VAR\" }"
 
 const mockSendDef = jest.fn();
 jest.mock('@aws-sdk/client-apprunner', () => {
@@ -55,6 +56,7 @@ describe('Deploy to AppRunner', () => {
             "build-command": BUILD_COMMAND,
             "start-command": START_COMMAND,
             port: PORT,
+            environmentVariables: ENVIRONMENT_VARIABLES,
             "wait-for-service-stability": 'false',
         };
 
@@ -72,6 +74,9 @@ describe('Deploy to AppRunner', () => {
 
         await run();
 
+        expect(
+          commandLog.create[0]?.SourceConfiguration?.CodeRepository?.CodeConfiguration?.CodeConfigurationValues?.RuntimeEnvironmentVariables
+        ).toEqual(JSON.parse(ENVIRONMENT_VARIABLES))
         expect(setFailedMock).not.toHaveBeenCalled();
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'service-id', SERVICE_ID);
         expect(setOutputMock).toHaveBeenNthCalledWith(2, 'service-url', SERVICE_URL);
@@ -83,6 +88,7 @@ describe('Deploy to AppRunner', () => {
             service: SERVICE_NAME,
             "access-role-arn": ACCESS_ROLE_ARN,
             image: DOCKER_IMAGE,
+            environmentVariables: ENVIRONMENT_VARIABLES,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -99,6 +105,9 @@ describe('Deploy to AppRunner', () => {
 
         await run();
 
+        expect(
+          commandLog.create[0]?.SourceConfiguration?.ImageRepository?.ImageConfiguration?.RuntimeEnvironmentVariables
+        ).toEqual(JSON.parse(ENVIRONMENT_VARIABLES))
         expect(setFailedMock).not.toHaveBeenCalled();
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'service-id', SERVICE_ID);
         expect(setOutputMock).toHaveBeenNthCalledWith(2, 'service-url', SERVICE_URL);
@@ -110,6 +119,7 @@ describe('Deploy to AppRunner', () => {
             service: SERVICE_NAME,
             "access-role-arn": ACCESS_ROLE_ARN,
             image: DOCKER_IMAGE,
+            environmentVariables: ENVIRONMENT_VARIABLES,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -132,6 +142,9 @@ describe('Deploy to AppRunner', () => {
 
         await run();
 
+        expect(
+          commandLog.update[0]?.SourceConfiguration?.ImageRepository?.ImageConfiguration?.RuntimeEnvironmentVariables
+        ).toEqual(JSON.parse(ENVIRONMENT_VARIABLES))
         expect(setFailedMock).not.toHaveBeenCalled();
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'service-id', SERVICE_ID);
         expect(setOutputMock).toHaveBeenNthCalledWith(2, 'service-url', SERVICE_URL);
@@ -147,6 +160,7 @@ describe('Deploy to AppRunner', () => {
             "build-command": BUILD_COMMAND,
             "start-command": START_COMMAND,
             port: PORT,
+            environmentVariables: ENVIRONMENT_VARIABLES,
             "wait-for-service-stability": 'false',
         };
 
@@ -170,6 +184,9 @@ describe('Deploy to AppRunner', () => {
 
         await run();
 
+        expect(
+          commandLog.update[0]?.SourceConfiguration?.CodeRepository?.CodeConfiguration?.CodeConfigurationValues?.RuntimeEnvironmentVariables
+        ).toEqual(JSON.parse(ENVIRONMENT_VARIABLES))
         expect(setFailedMock).not.toHaveBeenCalled();
         expect(setOutputMock).toHaveBeenNthCalledWith(1, 'service-id', SERVICE_ID);
         expect(setOutputMock).toHaveBeenNthCalledWith(2, 'service-url', SERVICE_URL);
@@ -221,6 +238,7 @@ describe('Deploy to AppRunner', () => {
             "build-command": BUILD_COMMAND,
             "start-command": START_COMMAND,
             port: PORT,
+            environmentVariables: ENVIRONMENT_VARIABLES,
             "wait-for-service-stability": 'true',
         };
         getInputMock.mockImplementation((name) => {
@@ -304,6 +322,7 @@ describe('Deploy to AppRunner', () => {
             "build-command": BUILD_COMMAND,
             "start-command": START_COMMAND,
             port: PORT,
+            environmentVariables: ENVIRONMENT_VARIABLES,
             "wait-for-service-stability": 'true',
         };
 
@@ -342,6 +361,7 @@ describe('Deploy to AppRunner', () => {
             "start-command": START_COMMAND,
             port: PORT,
             region: 'us-east-1',
+            environmentVariables: ENVIRONMENT_VARIABLES,
             branch: 'refs/head/master',
         };
 
