@@ -65,6 +65,7 @@ export async function run(): Promise<void> {
     const startCommand = getInput('start-command', { required: false });
     const port = getInputInt('port', 80);
     const waitForService = getInput('wait-for-service-stability', { required: false }) || "false";
+    const environmentVariables = JSON.parse(getInput('environmentVariables', { required: false }) || "{}")
 
     try {
         // Check for service type
@@ -141,7 +142,8 @@ export async function run(): Promise<void> {
                         ImageIdentifier: imageUri,
                         ImageRepositoryType: getImageType(imageUri),
                         ImageConfiguration: {
-                            Port: `${port}`
+                            Port: `${port}`,
+                            RuntimeEnvironmentVariables: environmentVariables
                         }
                     }
                 };
@@ -164,7 +166,8 @@ export async function run(): Promise<void> {
                                 Runtime: runtime,
                                 BuildCommand: buildCommand,
                                 StartCommand: startCommand,
-                                Port: `${port}`
+                                Port: `${port}`,
+                                RuntimeEnvironmentVariables: environmentVariables
                             }
                         }
                     }
@@ -190,7 +193,8 @@ export async function run(): Promise<void> {
                         ImageIdentifier: imageUri,
                         ImageRepositoryType: getImageType(imageUri),
                         ImageConfiguration: {
-                            Port: `${port}`
+                            Port: `${port}`,
+                            RuntimeEnvironmentVariables: environmentVariables
                         }
                     }
                 }
@@ -212,7 +216,8 @@ export async function run(): Promise<void> {
                                 Runtime: runtime,
                                 BuildCommand: buildCommand,
                                 StartCommand: startCommand,
-                                Port: `${port}`
+                                Port: `${port}`,
+                                RuntimeEnvironmentVariables: environmentVariables
                             }
                         }
                     }
