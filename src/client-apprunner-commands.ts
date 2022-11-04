@@ -1,4 +1,4 @@
-import { CreateServiceCommand, ImageRepositoryType, SourceConfiguration, UpdateServiceCommand } from "@aws-sdk/client-apprunner";
+import { CreateServiceCommand, DeleteServiceCommand, ImageRepositoryType, SourceConfiguration, UpdateServiceCommand } from "@aws-sdk/client-apprunner";
 import { ICodeConfiguration, ICreateOrUpdateActionParams, IImageConfiguration } from "./action-configuration";
 
 export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateServiceCommand {
@@ -65,5 +65,11 @@ export function getUpdateCommand(serviceArn: string, config: ICreateOrUpdateActi
             Memory: `${config.memory} GB`,
         },
         SourceConfiguration: (config.sourceConfig.sourceType == 'image') ? getImageSourceConfiguration(config.port, config.sourceConfig) : getCodeSourceConfiguration(config.port, config.sourceConfig),
+    });
+}
+
+export function getDeleteCommand(serviceArn: string): DeleteServiceCommand {
+    return new DeleteServiceCommand({
+        ServiceArn: serviceArn,
     });
 }

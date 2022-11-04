@@ -1,4 +1,4 @@
-import { getInput } from "@actions/core";
+import { getInput, info } from "@actions/core";
 import { Runtime } from "@aws-sdk/client-apprunner";
 
 // supported GitHub action modes
@@ -116,6 +116,9 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     // Source docker image URL - this will switch between deploying source code or docker image
     const imageUri = getInput('image', { required: false });
+
+    const environment = getInput('environment', { required: false });
+    info(`Using environment: ${environment}`);
 
     return {
         action,
