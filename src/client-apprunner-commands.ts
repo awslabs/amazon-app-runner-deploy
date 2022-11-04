@@ -8,8 +8,22 @@ export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateSer
             Cpu: `${config.cpu} vCPU`,
             Memory: `${config.memory} GB`,
         },
-        SourceConfiguration: (config.sourceConfig.sourceType == 'image') ? getImageSourceConfiguration(config.port, config.sourceConfig) : getCodeSourceConfiguration(config.port, config.sourceConfig),
+        SourceConfiguration: (config.sourceConfig.sourceType == 'image')
+            ? getImageSourceConfiguration(config.port, config.sourceConfig, getEnvironmentVariables(config.copyEnvVars))
+            : getCodeSourceConfiguration(config.port, config.sourceConfig, getEnvironmentVariables(config.copyEnvVars)),
     });
+}
+
+function getEnvironmentVariables(envVarNames: string[]): Record<string, string> | undefined {
+    if (envVarNames.length > 0) {
+        return envVarNames.reduce((acc: Record<string, string>, env) => {
+            const envVarValue = process.env[env];
+            if (envVarValue !== undefined) {
+                acc[env] = envVarValue;
+            }
+            return acc;
+        }, {});
+    }
 }
 
 // Determine ECR image repository type
@@ -17,32 +31,33 @@ function getImageType(imageUri: string) {
     return imageUri.startsWith("public.ecr") ? ImageRepositoryType.ECR_PUBLIC : ImageRepositoryType.ECR
 }
 
-function getCodeSourceConfiguration(port: number, config: ICodeConfiguration): SourceConfiguration {
+function getCodeSourceConfiguration(port: number, config: ICodeConfiguration, runtimeEnvironmentVariables?: Record<string, string>): SourceConfiguration {
     return {
         AuthenticationConfiguration: {
-            ConnectionArn: config.sourceConnectionArn
+            ConnectionArn: config.sourceConnectionArn,
         },
         AutoDeploymentsEnabled: true,
         CodeRepository: {
             RepositoryUrl: config.repoUrl,
             SourceCodeVersion: {
-                Type: "BRANCH",
-                Value: config.branch
+                Type: 'BRANCH',
+                Value: config.branch,
             },
             CodeConfiguration: {
-                ConfigurationSource: "API",
+                ConfigurationSource: 'API',
                 CodeConfigurationValues: {
                     Runtime: config.runtime,
                     BuildCommand: config.buildCommand,
                     StartCommand: config.startCommand,
-                    Port: `${port}`
-                }
-            }
-        }
+                    Port: `${port}`,
+                    RuntimeEnvironmentVariables: runtimeEnvironmentVariables,
+                },
+            },
+        },
     };
 }
 
-function getImageSourceConfiguration(port: number, config: IImageConfiguration): SourceConfiguration {
+function getImageSourceConfiguration(port: number, config: IImageConfiguration, runtimeEnvironmentVariables?: Record<string, string>): SourceConfiguration {
     return {
         AuthenticationConfiguration: {
             AccessRoleArn: config.accessRoleArn
@@ -51,7 +66,8 @@ function getImageSourceConfiguration(port: number, config: IImageConfiguration):
             ImageIdentifier: config.imageUri,
             ImageRepositoryType: getImageType(config.imageUri),
             ImageConfiguration: {
-                Port: `${port}`
+                Port: `${port}`,
+                RuntimeEnvironmentVariables: runtimeEnvironmentVariables,
             }
         }
     };
@@ -64,7 +80,9 @@ export function getUpdateCommand(serviceArn: string, config: ICreateOrUpdateActi
             Cpu: `${config.cpu} vCPU`,
             Memory: `${config.memory} GB`,
         },
-        SourceConfiguration: (config.sourceConfig.sourceType == 'image') ? getImageSourceConfiguration(config.port, config.sourceConfig) : getCodeSourceConfiguration(config.port, config.sourceConfig),
+        SourceConfiguration: (config.sourceConfig.sourceType == 'image')
+            ? getImageSourceConfiguration(config.port, config.sourceConfig, getEnvironmentVariables(config.copyEnvVars))
+            : getCodeSourceConfiguration(config.port, config.sourceConfig, getEnvironmentVariables(config.copyEnvVars)),
     });
 }
 

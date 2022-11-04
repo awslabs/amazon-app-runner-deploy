@@ -1,6 +1,6 @@
 {
   "name": "aws-actions-app-runner-deploy-service",
-  "version": "1.4.9",
+  "version": "2.0.0",
   "description": "Registers and deploys the application as AppRunner service.",
   "main": "./dist/index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hariohmprasath/amazon-app-runner-deploy.git"
+    "url": "git+https://github.com/awslabs/amazon-app-runner-deploy.git"
   },
   "keywords": [
     "AWS",
@@ -21,9 +21,9 @@
   "author": "AWS",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hariohmprasath/amazon-app-runner-deploy/issues"
+    "url": "https://github.com/awslabs/amazon-app-runner-deploy/issues"
   },
-  "homepage": "https://github.com/hariohmprasath/amazon-app-runner-deploy#readme",
+  "homepage": "https://github.com/awslabs/amazon-app-runner-deploy#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
     "@aws-sdk/client-apprunner": "^3.202.0",

@@ -33,6 +33,7 @@ export interface ICreateOrUpdateActionParams {
     region: string;
     cpu: number;
     memory: number;
+    copyEnvVars: string[];
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -118,10 +119,6 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     const imageUri = getInput('image', { required: false });
 
     const environment = getMultilineInput('copy-env-vars', { required: false });
-    info(`Copy environment variables: ${JSON.stringify(environment)}`);
-    for (const envVar of environment) {
-        info(`  ${envVar}: ${process.env[envVar]}`);
-    }
 
     return {
         action,
@@ -132,7 +129,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         waitTimeout: waitTimeout ?? 600,
         cpu,
         memory,
-        sourceConfig: (imageUri) ? getImageConfig(imageUri) : getSourceCodeConfig(),
+        sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
+        copyEnvVars: environment ?? [],
     };
 }
 
