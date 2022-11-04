@@ -36,6 +36,8 @@ export async function findExistingService(client: AppRunnerClient, serviceName: 
         if (listServiceResponse.ServiceSummaryList) {
             for (const service of listServiceResponse.ServiceSummaryList) {
                 if (service.ServiceName === serviceName && service.ServiceArn) {
+                    info(`${service.ServiceArn} status: ${service.Status}`);
+                    info(`Typed status: ${service.Status as ServiceStatus}`);
                     return {
                         ServiceArn: service.ServiceArn,
                         Status: service.Status as ServiceStatus,
