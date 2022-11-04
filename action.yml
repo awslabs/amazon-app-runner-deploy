@@ -56,6 +56,9 @@ inputs:
   wait-for-service-stability-seconds:
     description: '(Optional) Timeout in seconds to wait for the service deployment process to complete. The default is 600 seconds if "wait-for-service-stability" is set to true and there is no "wait-for-service-stability-seconds" parameter value specified.'
     required: false
+  copy-env-vars:
+    description: 'Multiline list of pipeline environment variables to be copied over to the App Runner service environment'
+    required: false
 outputs:
   service-id:
     description: 'App Runner service ID'

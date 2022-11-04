@@ -1,4 +1,4 @@
-import { getInput, info } from "@actions/core";
+import { getInput, getMultilineInput, info } from "@actions/core";
 import { Runtime } from "@aws-sdk/client-apprunner";
 
 // supported GitHub action modes
@@ -117,8 +117,11 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     // Source docker image URL - this will switch between deploying source code or docker image
     const imageUri = getInput('image', { required: false });
 
-    const environment = getInput('environment', { required: false });
-    info(`Using environment: ${environment}`);
+    const environment = getMultilineInput('copy-env-vars', { required: false });
+    info(`Copy environment variables: ${JSON.stringify(environment)}`);
+    for (const envVar of environment) {
+        info(`  ${envVar}: ${process.env[envVar]}`);
+    }
 
     return {
         action,
