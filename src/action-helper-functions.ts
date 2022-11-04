@@ -110,6 +110,7 @@ export async function validateAndExtractServiceInfo(config: IActionParams, servi
 export async function createOrUpdateService(client: AppRunnerClient, config: IActionParams, existingService?: IExistingService): Promise<IServiceInfo> {
     let service: Service | undefined = undefined;
     if (existingService) {
+        info(`Existing service info: ${JSON.stringify(existingService)}`);
         if (existingService.Status === ServiceStatus.CREATE_FAILED) {
             await deleteService(client, config, existingService.ServiceArn);
             service = await createService(client, config);
