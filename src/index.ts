@@ -27,7 +27,7 @@ export async function run(): Promise<void> {
 
         // Wait for service to be stable (if required)
         if (config.waitForService) {
-            await waitToStabilize(client, serviceInfo.ServiceId, serviceInfo.ServiceArn, config.waitTimeout);
+            await waitToStabilize(client, serviceInfo.ServiceArn, config.waitTimeout);
         } else {
             info(
                 `Service ${serviceInfo.ServiceId} has started an update. Watch for its progress in the AppRunner console`

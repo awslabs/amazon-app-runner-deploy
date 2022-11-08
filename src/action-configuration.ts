@@ -1,4 +1,4 @@
-import { getInput, getMultilineInput, info } from "@actions/core";
+import { getInput, getMultilineInput } from "@actions/core";
 import { Runtime } from "@aws-sdk/client-apprunner";
 
 // supported GitHub action modes
@@ -33,7 +33,7 @@ export interface ICreateOrUpdateActionParams {
     region: string;
     cpu: number;
     memory: number;
-    copyEnvVars: string[];
+    environment?: Record<string, string>;
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -44,7 +44,7 @@ interface IValidationRules {
 }
 
 function getOptionalInputInt(name: string, validation?: IValidationRules): number | undefined {
-    const val = getInput(name, { required: false });
+    const val = getInput(name, { required: false, trimWhitespace: true });
     if (!val) {
         return undefined;
     }
@@ -56,11 +56,11 @@ function getOptionalInputInt(name: string, validation?: IValidationRules): numbe
     }
 
     if (validation?.min && validation.min > result) {
-        throw new Error(`${name} value of ${result} is less then the allowed minimum (${validation.min})`);
+        throw new Error(`${name} value (${result}) is less then the allowed minimum (${validation.min})`);
     }
 
     if (validation?.max && validation.max < result) {
-        throw new Error(`${name} value of ${result} is greater then the allowed maximum (${validation.max})`);
+        throw new Error(`${name} value (${result}) is greater then the allowed maximum (${validation.max})`);
     }
 
     return result;
@@ -71,11 +71,11 @@ function getInputInt(name: string, defaultValue: number, validation?: IValidatio
 }
 
 function getInputStr(name: string, defaultValue: string): string {
-    return getInput(name, { required: false }) || defaultValue;
+    return getInput(name, { required: false, trimWhitespace: true }) || defaultValue;
 }
 
 function getInputBool(name: string, defaultValue: boolean): boolean {
-    const val = getInput(name, { required: false });
+    const val = getInput(name, { required: false, trimWhitespace: true });
     if (!val) {
         return defaultValue;
     }
@@ -97,7 +97,7 @@ export function getConfig(): IActionParams {
 function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     const action = Actions.CreateOrUpdate;
     // Service name - required input with no default value
-    const serviceName = getInput('service', { required: true });
+    const serviceName = getInput('service', { required: true, trimWhitespace: true });
 
     // Port number - 80
     const port = getInputInt('port', 80);
@@ -116,9 +116,9 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     const memory = getInputInt('memory', 2);
 
     // Source docker image URL - this will switch between deploying source code or docker image
-    const imageUri = getInput('image', { required: false });
+    const imageUri = getInput('image', { required: false, trimWhitespace: true });
 
-    const environment = getMultilineInput('copy-env-vars', { required: false });
+    const envVarNames = getMultilineInput('copy-env-vars', { required: false });
 
     return {
         action,
@@ -130,7 +130,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         cpu,
         memory,
         sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
-        copyEnvVars: environment ?? [],
+        environment: getEnvironmentVariables(envVarNames),
     };
 }
 
@@ -172,4 +172,19 @@ function getRuntime(): Runtime {
     }
 
     return Runtime[<keyof typeof Runtime>runtime];
+}
+
+function getEnvironmentVariables(envVarNames: string[]): Record<string, string> | undefined {
+    if (envVarNames.length > 0) {
+        const mapped = envVarNames.reduce((acc: Record<string, string>, env) => {
+            const envVarValue = process.env[env];
+            if (envVarValue !== undefined) {
+                acc[env] = envVarValue;
+            }
+            return acc;
+        }, {});
+        if (Object.keys(mapped).length > 0) {
+            return mapped;
+        }
+    }
 }

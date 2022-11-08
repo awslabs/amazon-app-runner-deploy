@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional `wait-for-service-stability-seconds` configuration parameter. Valid range is between 10 and 3600 seconds. The default is 600 seconds if `wait-for-service-stability` flag is set to true. This is a replacement for the existing `wait-for-service-stability` boolean flag, which will be deprecated in a future release.
 - Optional `action` parameter. The only valid value is `create_or_update` (case insensitive) and the parameter is optional. It is introduced for adding more sub-actions in a future release.
 - Support for additional `runtime` parameter values: `DOTNET_6`, `GO_1`, `NODEJS_16`, `PHP_81`, `RUBY_31`.
+- If there is an existing service with CREATE_FAILED status, it will be deleted first, before the new service creation is attempted.
 
 ### Changed
 

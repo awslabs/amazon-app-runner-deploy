@@ -6,6 +6,7 @@ Registers an AWS App Runner Service and deploys the application using the source
 
 <!-- toc -->
 
+- [V2 changes](#v2-changes)
 - [Usage](#usage)
   - [Code based service](#code-based-service)
   - [Image based service](#image-based-service)
@@ -17,6 +18,12 @@ Registers an AWS App Runner Service and deploys the application using the source
 
 <!-- tocstop -->
 
+## V2 Changes
+
+This action's codebase has been refactored to support future growth as well as to simplify to processes of adding new capabilities.
+
+Refer to the [Changelog](./CHANGELOG.md) for the change history.
+
 ## Usage
 
 This github action supports two types of App Runner services: source code based and docker image based.
@@ -27,7 +34,7 @@ See [action.yml](action.yml) for the full documentation for this action's inputs
 
 Source code is application code that App Runner builds and deploys for you. You point App Runner to a source code repository and choose a suitable runtime. App Runner builds an image that's based on the base image of the runtime and your application code. It then starts a service that runs a container based on this image.
 
-> Note: Only NodeJS, Python, and Java based services are supported.
+> Note: The list of supported runtime platforms is available [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-apprunner/enums/runtime.html).
 
 Here is the sample for deploying a NodeJS based service:
 
@@ -35,40 +42,50 @@ Here is the sample for deploying a NodeJS based service:
 name: Deploy to App Runner 
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:
+    branches: [main] # Trigger workflow on git push to main branch
+  workflow_dispatch: # Allow manual invocation of the workflow
 
 jobs:  
   deploy:
     runs-on: ubuntu-latest
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
     
     steps:            
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          # Use GitHub OIDC provider
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
           
       - name: Deploy to App Runner
         id: deploy-apprunner
         uses: awslabs/amazon-app-runner-deploy@main
+        env:
+          SERVER_PORT: 80
         with:
           service: app-runner-git-deploy-service
           source-connection-arn: ${{ secrets.AWS_CONNECTION_SOURCE_ARN }}
           repo: https://github.com/${{ github.repository }}
           branch: ${{ github.ref }}
-          runtime: NODEJS_14
+          runtime: NODEJS_16
           build-command: npm install
           start-command: npm start
           port: 18000
-          region: us-east-1
+          region: ${{ secrets.AWS_REGION }}
           cpu : 1
           memory : 2
-          wait-for-service-stability: true
+          # Deprecated: wait-for-service-stability: true
+          # The new way to control service stability timeout
+          wait-for-service-stability-seconds: 600
+          copy-env-vars: |
+            SERVER_PORT
       
-      - name: App Runner output
-        run: echo "App runner output ${{ steps.deploy-apprunner.outputs.service-id }}" 
+      - name: App Runner URL
+        run: echo "App runner URL ${{ steps.deploy-apprunner.outputs.service-url }}" 
 ```
 
 **Note:**
@@ -85,10 +102,16 @@ Here is the sample for deploying a App Runner service based on docker image:
 name: Deploy to App Runner
 on:
   push:
-    branches: [ master ]
+    branches: [main] # Trigger workflow on git push to main branch
+  workflow_dispatch: # Allow manual invocation of the workflow
+
 jobs:  
   deploy:
     runs-on: ubuntu-latest
+    # These permissions are needed to interact with GitHub's OIDC Token endpoint.
+    permissions:
+      id-token: write
+      contents: read
     
     steps:      
       - name: Checkout
@@ -98,11 +121,11 @@ jobs:
           
       - name: Configure AWS credentials
         id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1          
+          # Use GitHub OIDC provider
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -126,13 +149,15 @@ jobs:
           service: app-runner-git-deploy-service
           image: ${{ steps.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-east-1
+          region: ${{ secrets.AWS_REGION }}
           cpu : 1
           memory : 2
-          wait-for-service-stability: true
+          # Deprecated: wait-for-service-stability: true
+          # The new way to control service stability timeout
+          wait-for-service-stability-seconds: 1200
       
-      - name: App Runner output
-        run: echo "App runner output ${{ steps.deploy-apprunner.outputs.service-id }}" 
+      - name: App Runner URL
+        run: echo "App runner URL ${{ steps.deploy-apprunner.outputs.service-url }}" 
 ```
 
 **Note:**
@@ -145,7 +170,9 @@ jobs:
 This action relies on the [default behavior of the AWS SDK for Javascript](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-credentials-node.html) to determine AWS credentials and region.
 Use [the `aws-actions/configure-aws-credentials` action](https://github.com/aws-actions/configure-aws-credentials) to configure the GitHub Actions environment with environment variables containing AWS credentials and your desired region.
 
-We recommend following [Amazon IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) for the AWS credentials used in GitHub Actions workflows, including:
+We recommend using [GitHub's OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services) to get short-lived credentials needed for your actions. 
+
+It is recommended to follow [Amazon IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) for the AWS credentials used in GitHub Actions workflows, including:
 
 - Do not store credentials in your repository's code.  You may use [GitHub Actions secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets) to store credentials and redact credentials from GitHub Actions workflow logs.
 - [Create an individual IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#create-iam-users) with an access key for use in GitHub Actions workflows, preferably one per repository. Do not use the AWS account root user access key.

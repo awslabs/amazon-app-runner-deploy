@@ -1,7 +1,7 @@
 import { info } from "@actions/core";
-import { AppRunnerClient, DescribeServiceCommand, ListServicesCommand, ListServicesCommandOutput, Service, ServiceStatus } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus } from "@aws-sdk/client-apprunner";
 import { IActionParams } from "./action-configuration";
-import { getCreateCommand, getDeleteCommand, getUpdateCommand } from "./client-apprunner-commands";
+import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand } from "./client-apprunner-commands";
 
 // Core service attributes to be returned to the calling GitHub action handler code
 export interface IServiceInfo {
@@ -26,18 +26,13 @@ export async function findExistingService(client: AppRunnerClient, serviceName: 
     let nextToken: string | undefined = undefined;
 
     do {
-        const listServiceResponse: ListServicesCommandOutput = await client.send(
-            new ListServicesCommand({
-                NextToken: nextToken,
-            })
-        );
+        const listServiceResponse: ListServicesCommandOutput = await client.send(getListCommand(nextToken));
         nextToken = listServiceResponse.NextToken;
 
         if (listServiceResponse.ServiceSummaryList) {
             for (const service of listServiceResponse.ServiceSummaryList) {
                 if (service.ServiceName === serviceName && service.ServiceArn) {
-                    info(`${service.ServiceArn} status: ${service.Status}`);
-                    info(`Typed status: ${service.Status as ServiceStatus}`);
+                    info(`Discovered ${serviceName} (${service.ServiceArn}) with the following status: ${service.Status}`);
                     return {
                         ServiceArn: service.ServiceArn,
                         Status: service.Status as ServiceStatus,
@@ -46,8 +41,6 @@ export async function findExistingService(client: AppRunnerClient, serviceName: 
             }
         }
     } while (nextToken)
-
-    return undefined;
 }
 
 // Create a new service
@@ -113,7 +106,12 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
         info(`Existing service info: ${JSON.stringify(existingService)}`);
         if (existingService.Status === ServiceStatus.CREATE_FAILED) {
             await deleteService(client, config, existingService.ServiceArn);
-            service = await createService(client, config);
+            const status = await waitToStabilize(client, existingService.ServiceArn, 900); // wait for delete operation to complete in 15 minutes max
+            if (status === ServiceStatus.DELETED) {
+                service = await createService(client, config);
+            } else {
+                throw new Error(`Failed to delete service ${config.serviceName} (${existingService.ServiceArn}). Its current status is ${status}`);
+            }
         } else {
             service = await updateService(client, config, existingService.ServiceArn);
         }
@@ -124,14 +122,12 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
     return validateAndExtractServiceInfo(config, service);
 }
 
-async function describeService(client: AppRunnerClient, serviceArn: string): Promise<IExistingService | undefined> {
-    const describeServiceResponse = await client.send(new DescribeServiceCommand({
-        ServiceArn: serviceArn
-    }));
+async function describeService(client: AppRunnerClient, serviceArn: string): Promise<IExistingService> {
+    const describeServiceResponse = await client.send(getDescribeCommand(serviceArn));
 
     const service = describeServiceResponse.Service;
     if(!service) {
-        return undefined;
+        throw new Error(`App Runner Client returned an empty Service for ${serviceArn}`);
     }
 
     return {
@@ -140,66 +136,30 @@ async function describeService(client: AppRunnerClient, serviceArn: string): Pro
     };
 }
 
-// export async function waitToBeDeleted(client: AppRunnerClient, serviceId: string, serviceArn: string, timeoutSeconds: number): Promise<void> {
-//     const interval = setInterval(() => {
-//     }, 1000);
-// }
-
-// async function waitForServiceStatus(client: AppRunnerClient, serviceId: string, serviceArn: string, condition: (serviceStatus?: ServiceStatus)=>boolean, timeoutSeconds: number) {
-//     const stopTime = new Date(new Date().getTime() + timeoutSeconds * 1000).getTime();
-
-//     let status: ServiceStatus = ServiceStatus.OPERATION_IN_PROGRESS;
-//     info(`Waiting for the service ${serviceId} to reach stable state`);
-//     while (status === ServiceStatus.OPERATION_IN_PROGRESS && stopTime >= new Date().getTime()) {
-//         const startTime = new Date().getTime();
-//         const describeServiceResponse = await client.send(new DescribeServiceCommand({
-//             ServiceArn: serviceArn
-//         }));
-
-//         status = (describeServiceResponse.Service?.Status as ServiceStatus | undefined) ?? ServiceStatus.OPERATION_IN_PROGRESS;
-//         if (status !== ServiceStatus.OPERATION_IN_PROGRESS) {
-//             info(`Service ${serviceId} has reached the stable state ${status}`);
-//             return;
-//         }
-
-//         const duration = new Date().getTime() - startTime;
-
-//         const idleTime = 5000 - duration;
-//         if (idleTime > 0) {
-//             // Wait for the rest of 5 second before the retry
-//             await sleep(idleTime);
-//         }
-//     }
-
-//     throw new Error(`Service did not reach stable state within ${timeoutSeconds} seconds`);
-// }
-
 // Wait for the service to reach a stable state
-export async function waitToStabilize(client: AppRunnerClient, serviceId: string, serviceArn: string, timeoutSeconds: number): Promise<void> {
+export async function waitToStabilize(client: AppRunnerClient, serviceArn: string, timeoutSeconds: number): Promise<ServiceStatus> {
     const stopTime = new Date(new Date().getTime() + timeoutSeconds * 1000).getTime();
 
     let status: ServiceStatus = ServiceStatus.OPERATION_IN_PROGRESS;
-    info(`Waiting for the service ${serviceId} to reach stable state`);
+    info(`Waiting for ${serviceArn} to reach stable state`);
     while (status === ServiceStatus.OPERATION_IN_PROGRESS && stopTime >= new Date().getTime()) {
         const startTime = new Date().getTime();
-        const describeServiceResponse = await client.send(new DescribeServiceCommand({
-            ServiceArn: serviceArn
-        }));
+        const describeServiceResponse = await describeService(client, serviceArn);
 
-        status = (describeServiceResponse.Service?.Status as ServiceStatus | undefined) ?? ServiceStatus.OPERATION_IN_PROGRESS;
+        status = describeServiceResponse.Status;
         if (status !== ServiceStatus.OPERATION_IN_PROGRESS) {
-            info(`Service ${serviceId} has reached the stable state ${status}`);
-            return;
+            info(`Service ${serviceArn} has reached the stable state ${status}`);
+            return status;
         }
 
         const duration = new Date().getTime() - startTime;
 
-        const idleTime = 5000 - duration;
+        const idleTime = 1000 - duration;
         if (idleTime > 0) {
-            // Wait for the rest of 5 second before the retry
+            // Wait for the rest of the second before the retry
             await sleep(idleTime);
         }
     }
 
-    throw new Error(`Service did not reach stable state within ${timeoutSeconds} seconds`);
+    throw new Error(`Service ${serviceArn} did not reach stable state within ${timeoutSeconds} seconds`);
 }
