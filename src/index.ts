@@ -1,6 +1,6 @@
 
 import { getInput, info, setFailed, setOutput } from "@actions/core";
-import { AppRunnerClient, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType, Service } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, TagResourceCommand, CreateServiceCommand, ListServicesCommand, ListServicesCommandOutput, UpdateServiceCommand, DescribeServiceCommand, ImageRepositoryType, Service, Tag } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
 
 //https://docs.aws.amazon.com/apprunner/latest/api/API_CodeConfigurationValues.html
@@ -54,6 +54,19 @@ async function getServiceArn(client: AppRunnerClient, serviceName: string): Prom
     return undefined;
 }
 
+function getAwsTags(rawTags: string): Tag[] {
+  const parsed = JSON.parse(rawTags);
+  return Object.keys(parsed).reduce(function(acc, tagKey) {
+    return [
+      ...acc,
+      {
+        Key: tagKey,
+        Value: parsed[tagKey]
+      }
+    ]
+  }, [] as Tag[])
+}
+
 export async function run(): Promise<void> {
     const serviceName = getInput('service', { required: true });
     const sourceConnectionArn = getInput('source-connection-arn', { required: false });
@@ -65,6 +78,7 @@ export async function run(): Promise<void> {
     const startCommand = getInput('start-command', { required: false });
     const port = getInputInt('port', 80);
     const waitForService = getInput('wait-for-service-stability', { required: false }) || "false";
+    const awsTags = getAwsTags(getInput('tags', { required: false }) || "{}")
 
     try {
         // Check for service type
@@ -129,7 +143,8 @@ export async function run(): Promise<void> {
                     Cpu: `${cpu} vCPU`,
                     Memory: `${memory} GB`,
                 },
-                SourceConfiguration: {}
+                SourceConfiguration: {},
+                Tags: awsTags
             });
             if (isImageBased) {
                 // Image based set docker registry details
@@ -222,6 +237,14 @@ export async function run(): Promise<void> {
             service = updateServiceResponse.Service;
             info(`Service update initiated with operation ID - ${service?.ServiceId}`)
             serviceArn = updateServiceResponse.Service?.ServiceArn;
+        }
+
+        if (awsTags.length) {
+          const tagCommand = new TagResourceCommand({
+            ResourceArn: serviceArn,
+            Tags: awsTags
+          })
+          await client.send(tagCommand)
         }
 
         // Set output

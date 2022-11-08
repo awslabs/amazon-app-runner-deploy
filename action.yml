@@ -37,6 +37,9 @@ inputs:
   region:
     description: "AWS deployment region"
     required: false
+  tags:
+    description: "AWS tags in JSON format"
+    required: false
   cpu:
     description: 'CPU for the service, defaults to 1 vCPU'
     required: false
