@@ -14,16 +14,17 @@ inputs:
     description: 'ARN for IAM Role, if the App Runner service is configured with ECR image'
     required: false
   repo:
-    description: "GitHub source repository URL"
+    description: 'GitHub source repository URL. Cannot be set when "image" parameter is set.'
     required: false
   branch:
     description: "Repository branch name"
     required: false
+    default: 'main'
   image:
-    description: 'Docker image URI with tag'
+    description: 'Docker image URI with tag. Cannot be set when "repo" parameter is set.'
     required: false
   runtime:
-    description: 'Runtime of the application, note: AppRunner only supports the following runtime types: PYTHON_3 | NODEJS_12 | NODEJS_14 | CORRETTO_8 | CORRETTO_11'
+    description: 'Runtime of the application. Refer to https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-apprunner/enums/runtime.html for the list of supported runtime identifiers.'
     required: false
   build-command:
     description: "Application build command"
@@ -32,25 +33,39 @@ inputs:
     description: "Application start command"
     required: false
   port:
-    description: "The service uses this TCP port"
+    description: "The service uses this TCP port (default is 80)"
     required: false
+    default: '80'
   region:
-    description: "AWS deployment region"
+    description: "AWS deployment region (default is us-east-1)"
     required: false
+    default: 'us-east-1'
   cpu:
-    description: 'CPU for the service, defaults to 1 vCPU'
+    description: 'Number of vCPUs for the service (default is 1 vCPU)'
     required: false
+    default: '1'
   memory:
-    description: 'Memory for the service, defaults to 2 GB'
+    description: 'Memory for the service (GB) (default is 2GB)'
     required: false
+    default: '2'
   wait-for-service-stability:
     description: 'Whether to wait for the App Runner service to reach stable state after deploying the new task definition. Valid value is "true". Will default to not waiting.'
+    required: false
+    default: 'false'
+    deprecationMessage: 'This input parameter will be removed in a future release - use "wait-for-service-stability-seconds", which allows you to control the timeout duration'
+  wait-for-service-stability-seconds:
+    description: '(Optional) Timeout in seconds to wait for the service deployment process to complete. The default is 600 seconds if "wait-for-service-stability" is set to true and there is no "wait-for-service-stability-seconds" parameter value specified.'
+    required: false
+  copy-env-vars:
+    description: 'Multiline list of pipeline environment variables to be copied over to the App Runner service environment'
     required: false
 outputs:
   service-id:
     description: 'App Runner service ID'
+  service-arn:
+    description: 'App Runner service ARN'
   service-url:
     description: 'App Runner service URL'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
