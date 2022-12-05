@@ -85,8 +85,8 @@ export async function validateAndExtractServiceInfo(config: IActionParams, servi
         info(`Service ARN: ${serviceArn}`);
     }
 
-    const serviceUrl = service.ServiceUrl;
-    if (!serviceUrl) {
+    const serviceUrl = service.ServiceUrl ?? "";
+    if (serviceUrl === "") {
         info(`App Runner Client returned an empty ServiceUrl for ${config.serviceName}, this could happen if the deployment is of an AWS App Runner Private Service`);
     } else {
         info(`Service URL: ${serviceUrl}`);
