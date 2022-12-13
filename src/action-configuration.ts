@@ -15,6 +15,7 @@ export interface ICodeConfiguration {
     runtime: Runtime;
     buildCommand: string;
     startCommand: string;
+    autoDeploymentsEnabled: boolean
 }
 
 export interface IImageConfiguration {
@@ -34,6 +35,7 @@ export interface ICreateOrUpdateActionParams {
     cpu: number;
     memory: number;
     environment?: Record<string, string>;
+    autoDeploymentsEnabled: boolean
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -118,6 +120,9 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     // Source docker image URL - this will switch between deploying source code or docker image
     const imageUri = getInput('image', { required: false, trimWhitespace: true });
 
+    // AutoDeploymentsEnabled - true
+    const autoDeploymentsEnabled = getInputBool('auto-deployments-enabled', true)
+
     const envVarNames = getMultilineInput('copy-env-vars', { required: false });
 
     return {
@@ -131,6 +136,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         memory,
         sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
         environment: getEnvironmentVariables(envVarNames),
+        autoDeploymentsEnabled
     };
 }
 
@@ -161,6 +167,7 @@ function getSourceCodeConfig(): ICodeConfiguration {
         runtime: getRuntime(),
         buildCommand: getInput('build-command', { required: true }),
         startCommand: getInput('start-command', { required: true }),
+        autoDeploymentsEnabled: getInputBool('auto-deployments-enabled', true)
     }
 }
 

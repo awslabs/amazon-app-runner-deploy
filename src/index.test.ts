@@ -22,6 +22,7 @@ const BUILD_COMMAND = "build-command";
 const START_COMMAND = "start-command";
 const PORT = "80";
 const DEFAULT_REGION = 'us-east-1';
+const AUTO_DEPLOYMENT_ENABLED = 'true';
 
 const mockSendDef = jest.fn<typeof AppRunnerClient.prototype.send>();
 jest.mock('@aws-sdk/client-apprunner', () => {
@@ -221,6 +222,7 @@ describe('Deploy to AppRunner', () => {
             "start-command": START_COMMAND,
             port: PORT,
             "wait-for-service-stability": 'false',
+            'auto-deployments-enabled': AUTO_DEPLOYMENT_ENABLED
         };
 
         getInputMock.mockImplementation((name) => {
@@ -297,6 +299,7 @@ describe('Deploy to AppRunner', () => {
             branch: 'refs/head/release',
             cpu: '3',
             memory: '5',
+            'auto-deployments-enabled': 'false'
         };
 
         getInputMock.mockImplementation((name) => {
@@ -325,7 +328,7 @@ describe('Deploy to AppRunner', () => {
                     AuthenticationConfiguration: {
                         ConnectionArn: SOURCE_ARN_CONNECTION,
                     },
-                    AutoDeploymentsEnabled: true,
+                    AutoDeploymentsEnabled: false,
                     CodeRepository: {
                         RepositoryUrl: REPO,
                         SourceCodeVersion: {
@@ -448,6 +451,7 @@ describe('Deploy to AppRunner', () => {
             "start-command": START_COMMAND,
             port: PORT,
             "wait-for-service-stability": 'false',
+            'auto-deployments-enabled': AUTO_DEPLOYMENT_ENABLED
         };
 
         getInputMock.mockImplementation((name) => {

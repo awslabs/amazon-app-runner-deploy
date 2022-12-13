@@ -55,7 +55,7 @@ function getCodeSourceConfiguration(port: number, config: ICodeConfiguration, ru
         AuthenticationConfiguration: {
             ConnectionArn: config.sourceConnectionArn,
         },
-        AutoDeploymentsEnabled: true,
+        AutoDeploymentsEnabled: config.autoDeploymentsEnabled,
         CodeRepository: {
             RepositoryUrl: config.repoUrl,
             SourceCodeVersion: {
