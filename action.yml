@@ -59,6 +59,9 @@ inputs:
   copy-env-vars:
     description: 'Multiline list of pipeline environment variables to be copied over to the App Runner service environment'
     required: false
+  tags:
+    description: 'key-value pairs to associate with the service. This input should be JSON-formatted, for example [ { "Key": "string", "Value": "string" } ]'
+    required: false
 outputs:
   service-id:
     description: 'App Runner service ID'

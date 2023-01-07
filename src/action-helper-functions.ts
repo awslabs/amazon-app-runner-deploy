@@ -1,7 +1,7 @@
 import { info } from "@actions/core";
 import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus } from "@aws-sdk/client-apprunner";
 import { IActionParams } from "./action-configuration";
-import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand } from "./client-apprunner-commands";
+import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand, getTagResourceCommand } from "./client-apprunner-commands";
 
 // Core service attributes to be returned to the calling GitHub action handler code
 export interface IServiceInfo {
@@ -59,6 +59,15 @@ async function updateService(client: AppRunnerClient, config: IActionParams, ser
     return updateServiceResponse.Service;
 }
 
+async function updateTag(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<void> {
+    info(`Updating tags service ${config.serviceName} (${serviceArn})`);
+    if (config.tags.length) {
+      const command = getTagResourceCommand(serviceArn, config);
+      await client.send(command)
+    }
+    return
+}
+
 async function deleteService(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<void> {
     info(`Deleting existing service ${config.serviceName} (${serviceArn})`);
     const command = getDeleteCommand(serviceArn);
@@ -113,6 +122,7 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
                 throw new Error(`Failed to delete service ${config.serviceName} (${existingService.ServiceArn}). Its current status is ${status}`);
             }
         } else {
+            await updateTag(client, config, existingService.ServiceArn);
             service = await updateService(client, config, existingService.ServiceArn);
         }
     } else {
