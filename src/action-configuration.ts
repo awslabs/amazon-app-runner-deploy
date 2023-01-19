@@ -198,5 +198,14 @@ function getTags(tags: string): Tag[] {
     return []
   }
 
-  return JSON.parse(tags)
+  const parsed = JSON.parse(tags);
+  return Object.keys(parsed).reduce((acc, tagKey) => {
+    return [
+      ...acc,
+      {
+        Key: tagKey,
+        Value: parsed[tagKey]
+      }
+    ]
+  }, [] as Tag[])
 }

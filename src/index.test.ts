@@ -22,7 +22,7 @@ const BUILD_COMMAND = "build-command";
 const START_COMMAND = "start-command";
 const PORT = "80";
 const DEFAULT_REGION = 'us-east-1';
-const TAGS = '[{ "Key": "env", "Value": "test" }]'
+const TAGS = '{ "env": "test" }'
 
 const mockSendDef = jest.fn<typeof AppRunnerClient.prototype.send>();
 jest.mock('@aws-sdk/client-apprunner', () => {

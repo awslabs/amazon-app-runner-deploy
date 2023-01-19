@@ -84,7 +84,7 @@ jobs:
           copy-env-vars: |
             SERVER_PORT
           tags: >
-            [{ "Key": "env", "Value": "test" }]
+            { "env": "test" }
       
       - name: App Runner URL
         run: echo "App runner URL ${{ steps.deploy-apprunner.outputs.service-url }}" 
