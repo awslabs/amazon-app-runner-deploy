@@ -5,7 +5,7 @@ import { jest, expect, test, describe } from '@jest/globals';
 import { getInput, getMultilineInput, info, setFailed, setOutput } from '@actions/core';
 import { run } from '.';
 import { FakeInput, getFakeInput } from './test-helpers/fake-input';
-import { AppRunnerClient, CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, ServiceStatus, UpdateServiceCommand } from '@aws-sdk/client-apprunner';
+import { AppRunnerClient, CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, ServiceStatus, UpdateServiceCommand, TagResourceCommand } from '@aws-sdk/client-apprunner';
 
 jest.mock('@actions/core');
 
@@ -22,6 +22,7 @@ const BUILD_COMMAND = "build-command";
 const START_COMMAND = "start-command";
 const PORT = "80";
 const DEFAULT_REGION = 'us-east-1';
+const TAGS = '{ "env": "test" }'
 
 const mockSendDef = jest.fn<typeof AppRunnerClient.prototype.send>();
 jest.mock('@aws-sdk/client-apprunner', () => {
@@ -221,6 +222,7 @@ describe('Deploy to AppRunner', () => {
             "start-command": START_COMMAND,
             port: PORT,
             "wait-for-service-stability": 'false',
+            tags: TAGS,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -268,6 +270,7 @@ describe('Deploy to AppRunner', () => {
                         },
                     },
                 },
+                Tags: [{ Key: 'env', Value: 'test' }],
             });
             return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL } });
         });
@@ -297,6 +300,7 @@ describe('Deploy to AppRunner', () => {
             branch: 'refs/head/release',
             cpu: '3',
             memory: '5',
+            tags: TAGS,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -344,6 +348,7 @@ describe('Deploy to AppRunner', () => {
                         },
                     },
                 },
+                Tags: [{ Key: 'env', Value: 'test' }],
             });
             return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL } });
         });
@@ -448,6 +453,7 @@ describe('Deploy to AppRunner', () => {
             "start-command": START_COMMAND,
             port: PORT,
             "wait-for-service-stability": 'false',
+            tags: TAGS,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -469,6 +475,13 @@ describe('Deploy to AppRunner', () => {
                 }]
             });
         });
+        mockSendDef.mockImplementationOnce(async (cmd: TagResourceCommand) => {
+            expect(cmd.input).toMatchObject({
+                ResourceArn: SERVICE_ARN, // tag resource command requires service arn
+                Tags: [{ Key: 'env', Value: 'test' }],
+            })
+            return
+        })
         mockSendDef.mockImplementationOnce(async (cmd: UpdateServiceCommand) => {
             expect(cmd.input).toMatchObject({
                 ServiceArn: SERVICE_ARN, // update command requires service arn

@@ -17,6 +17,7 @@ export interface FakeInput {
     branch?: string;
     cpu?: string;
     memory?: string;
+    tags?: string;
 }
 
 export function getFakeInput(config: FakeInput, name: string, options?: InputOptions): string {

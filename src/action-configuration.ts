@@ -1,5 +1,5 @@
 import { getInput, getMultilineInput } from "@actions/core";
-import { Runtime } from "@aws-sdk/client-apprunner";
+import { Runtime, Tag } from "@aws-sdk/client-apprunner";
 
 // supported GitHub action modes
 enum Actions {
@@ -34,6 +34,7 @@ export interface ICreateOrUpdateActionParams {
     cpu: number;
     memory: number;
     environment?: Record<string, string>;
+    tags: Tag[]
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -120,6 +121,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     const envVarNames = getMultilineInput('copy-env-vars', { required: false });
 
+    const tags = getInput('tags', { required: false })
+
     return {
         action,
         serviceName,
@@ -131,6 +134,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         memory,
         sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
         environment: getEnvironmentVariables(envVarNames),
+        tags: getTags(tags),
     };
 }
 
@@ -187,4 +191,21 @@ function getEnvironmentVariables(envVarNames: string[]): Record<string, string> 
             return mapped;
         }
     }
+}
+
+function getTags(tags: string): Tag[] {
+  if (!tags.length) {
+    return []
+  }
+
+  const parsed = JSON.parse(tags);
+  return Object.keys(parsed).reduce((acc, tagKey) => {
+    return [
+      ...acc,
+      {
+        Key: tagKey,
+        Value: parsed[tagKey]
+      }
+    ]
+  }, [] as Tag[])
 }

@@ -83,6 +83,8 @@ jobs:
           wait-for-service-stability-seconds: 600
           copy-env-vars: |
             SERVER_PORT
+          tags: >
+            { "env": "test" }
       
       - name: App Runner URL
         run: echo "App runner URL ${{ steps.deploy-apprunner.outputs.service-url }}" 
