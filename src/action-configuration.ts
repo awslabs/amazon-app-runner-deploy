@@ -35,6 +35,7 @@ export interface ICreateOrUpdateActionParams {
     memory: number;
     environment?: Record<string, string>;
     tags: Tag[]
+    autoScalingConfigArn?: string;
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -123,6 +124,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     const tags = getInput('tags', { required: false })
 
+    const autoScalingConfigArn = getInput('auto-scaling-config-arn', { required: false, trimWhitespace: true });
+
     return {
         action,
         serviceName,
@@ -135,6 +138,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
         environment: getEnvironmentVariables(envVarNames),
         tags: getTags(tags),
+        autoScalingConfigArn: autoScalingConfigArn,
     };
 }
 

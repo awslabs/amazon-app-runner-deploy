@@ -15,6 +15,7 @@ const SERVICE_NAME = "serviceName";
 const SERVICE_ARN = "serviceArn";
 const SOURCE_ARN_CONNECTION = "sourceArnConnection";
 const ACCESS_ROLE_ARN = "accessRoleArn";
+const AUTO_SCALING_CONFIG_ARN = "autoScalingConfigArn";
 const REPO = "repo";
 const PUBLIC_DOCKER_IMAGE = "public.ecr.aws/bitnami/node:latest";
 const RUNTIME = "NODEJS_16";
@@ -301,6 +302,7 @@ describe('Deploy to AppRunner', () => {
             cpu: '3',
             memory: '5',
             tags: TAGS,
+            'auto-scaling-config-arn': AUTO_SCALING_CONFIG_ARN,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -325,6 +327,7 @@ describe('Deploy to AppRunner', () => {
                     Cpu: `3 vCPU`,
                     Memory: `5 GB`,
                 },
+                AutoScalingConfigurationArn: AUTO_SCALING_CONFIG_ARN,
                 SourceConfiguration: {
                     AuthenticationConfiguration: {
                         ConnectionArn: SOURCE_ARN_CONNECTION,
@@ -454,6 +457,7 @@ describe('Deploy to AppRunner', () => {
             port: PORT,
             "wait-for-service-stability": 'false',
             tags: TAGS,
+            'auto-scaling-config-arn': AUTO_SCALING_CONFIG_ARN,
         };
 
         getInputMock.mockImplementation((name) => {
@@ -489,6 +493,7 @@ describe('Deploy to AppRunner', () => {
                     Cpu: `1 vCPU`,
                     Memory: `2 GB`,
                 },
+                AutoScalingConfigurationArn: AUTO_SCALING_CONFIG_ARN,
                 SourceConfiguration: {
                     AuthenticationConfiguration: {
                         ConnectionArn: SOURCE_ARN_CONNECTION,
