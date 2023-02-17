@@ -197,6 +197,7 @@ Generally this action requires the following minimum set of permissions:
                 "apprunner:CreateService",
                 "apprunner:UpdateService",
                 "apprunner:DescribeService",
+                "apprunner:TagResource",
                 "iam:PassRole"
             ],
             "Resource": "*"
