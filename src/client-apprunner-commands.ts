@@ -1,4 +1,4 @@
-import { CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, SourceConfiguration, UpdateServiceCommand, TagResourceCommand } from "@aws-sdk/client-apprunner";
+import { CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, SourceConfiguration, UpdateServiceCommand, TagResourceCommand, ListOperationsCommand } from "@aws-sdk/client-apprunner";
 import { ICodeConfiguration, ICreateOrUpdateActionParams, IImageConfiguration } from "./action-configuration";
 
 export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateServiceCommand {
@@ -50,6 +50,12 @@ export function getDescribeCommand(serviceArn: string): DescribeServiceCommand {
 export function getListCommand(nextToken?: string): ListServicesCommand {
     return new ListServicesCommand({
         NextToken: nextToken,
+    });
+}
+
+export function getListOperationsCommand(serviceArn: string): ListOperationsCommand {
+    return new ListOperationsCommand({
+        ServiceArn: serviceArn,
     });
 }
 

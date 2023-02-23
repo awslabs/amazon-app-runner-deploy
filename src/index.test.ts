@@ -5,7 +5,7 @@ import { jest, expect, test, describe } from '@jest/globals';
 import { getInput, getMultilineInput, info, setFailed, setOutput } from '@actions/core';
 import { run } from '.';
 import { FakeInput, getFakeInput } from './test-helpers/fake-input';
-import { AppRunnerClient, CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, ServiceStatus, UpdateServiceCommand, TagResourceCommand } from '@aws-sdk/client-apprunner';
+import { AppRunnerClient, CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, ServiceStatus, UpdateServiceCommand, TagResourceCommand, ListOperationsCommand, OperationStatus } from '@aws-sdk/client-apprunner';
 
 jest.mock('@actions/core');
 
@@ -23,6 +23,7 @@ const START_COMMAND = "start-command";
 const PORT = "80";
 const DEFAULT_REGION = 'us-east-1';
 const TAGS = '{ "env": "test" }'
+const OPERATION_ID = "test-operation-id";
 
 const mockSendDef = jest.fn<typeof AppRunnerClient.prototype.send>();
 jest.mock('@aws-sdk/client-apprunner', () => {
@@ -513,7 +514,7 @@ describe('Deploy to AppRunner', () => {
                     },
                 },
             });
-            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL } });
+            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL }, OperationId: OPERATION_ID });
         });
 
         await run();
@@ -682,7 +683,7 @@ describe('Deploy to AppRunner', () => {
                     },
                 },
             });
-            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL } });
+            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL }, OperationId: OPERATION_ID });
         });
 
         await run();
@@ -750,7 +751,7 @@ describe('Deploy to AppRunner', () => {
                     },
                 },
             });
-            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL } });
+            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL }, OperationId: OPERATION_ID });
         });
 
         await run();
@@ -763,6 +764,76 @@ describe('Deploy to AppRunner', () => {
         expect(setOutputMock).toHaveBeenNthCalledWith(3, 'service-url', SERVICE_URL);
         expect(infoMock).toBeCalledWith(`Service ${SERVICE_ID} has started an update. Watch for its progress in the AppRunner console`);
     });
+
+    test('update app runner with service rollback', async () => {
+        const inputConfig: FakeInput = {
+            service: SERVICE_NAME,
+            "access-role-arn": ACCESS_ROLE_ARN,
+            image: PUBLIC_DOCKER_IMAGE,
+            "wait-for-service-stability": 'true',
+        };
+
+        getInputMock.mockImplementation((name) => {
+            return getFakeInput(inputConfig, name);
+        });
+        getMultilineInputMock.mockImplementation((name) => {
+            expect(name).toEqual('copy-env-vars');
+            return (['_NON_EXISTENT_VAR_']);
+        });
+
+        mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
+            expect(cmd.input.NextToken).toBeUndefined();
+            return ({
+                NextToken: undefined,
+                ServiceSummaryList: [{
+                    ServiceName: SERVICE_NAME,
+                    ServiceArn: SERVICE_ARN,
+                    Status: ServiceStatus.RUNNING,
+                }]
+            });
+        });
+        mockSendDef.mockImplementationOnce(async (cmd: UpdateServiceCommand) => {
+            expect(cmd.input).toMatchObject({
+                ServiceArn: SERVICE_ARN, // update command requires service arn
+                InstanceConfiguration: {
+                    Cpu: `1 vCPU`,
+                    Memory: `2 GB`,
+                },
+                SourceConfiguration: {
+                    AuthenticationConfiguration: {
+                        AccessRoleArn: ACCESS_ROLE_ARN,
+                    },
+                    ImageRepository: {
+                        ImageIdentifier: PUBLIC_DOCKER_IMAGE,
+                        ImageRepositoryType: ImageRepositoryType.ECR_PUBLIC,
+                        ImageConfiguration: {
+                            Port: PORT,
+                            RuntimeEnvironmentVariables: undefined,
+                        },
+                    },
+                },
+            });
+            return ({ Service: { ServiceId: SERVICE_ID, ServiceArn: SERVICE_ARN, ServiceUrl: SERVICE_URL }, OperationId: OPERATION_ID });
+        });
+        mockSendDef.mockImplementationOnce(async (cmd: DescribeServiceCommand) => {
+            expect(cmd.input).toMatchObject({
+                ServiceArn: SERVICE_ARN,
+            });
+            return { Service: { Status: ServiceStatus.RUNNING } };
+        });
+        mockSendDef.mockImplementationOnce(async (cmd: ListOperationsCommand) => {
+            expect(cmd.input).toMatchObject({
+              ServiceArn: SERVICE_ARN,
+            })
+            return ({ OperationSummaryList: [ { Id: OPERATION_ID, Status: OperationStatus.FAILED }] })
+        });
+
+        await run();
+
+        expect(setFailedMock).toBeCalledWith(`Operation ${OPERATION_ID} is not successful. Its current status is ${OperationStatus.FAILED}`)
+        expect(appRunnerClientMock.mock.calls).toHaveLength(1);
+        expect(appRunnerClientMock.mock.calls[0][0]).toMatchObject({ region: DEFAULT_REGION });
+    })
 
     test('existing CREATE_FAILED service is deleted first', async () => {
         const inputConfig: FakeInput = {
