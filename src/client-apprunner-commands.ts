@@ -8,6 +8,7 @@ export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateSer
             Cpu: `${config.cpu} vCPU`,
             Memory: `${config.memory} GB`,
         },
+        AutoScalingConfigurationArn: config.autoScalingConfigArn,
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')
             ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment)
             : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment),
@@ -22,6 +23,7 @@ export function getUpdateCommand(serviceArn: string, config: ICreateOrUpdateActi
             Cpu: `${config.cpu} vCPU`,
             Memory: `${config.memory} GB`,
         },
+        AutoScalingConfigurationArn: config.autoScalingConfigArn,
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')
             ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment)
             : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment),
