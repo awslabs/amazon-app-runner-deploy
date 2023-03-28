@@ -184,7 +184,29 @@ It is recommended to follow [Amazon IAM best practices](https://docs.aws.amazon.
 
 ## Permissions
 
-For **Image based service** this action requires the following minimum set of permissions:
+Generally this action requires the following minimum set of permissions:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "apprunner:ListServices",
+                "apprunner:CreateService",
+                "apprunner:UpdateService",
+                "apprunner:DescribeService",
+                "apprunner:TagResource",
+                "iam:PassRole"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+For **Image based service** this action requires additionally the following minimum set of permissions:
 
 ```json
 {
