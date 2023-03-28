@@ -1,6 +1,6 @@
 {
   "name": "aws-actions-app-runner-deploy-service",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Registers and deploys the application as AppRunner service.",
   "main": "./dist/index.js",
   "scripts": {
