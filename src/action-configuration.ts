@@ -1,4 +1,4 @@
-import { getInput, getMultilineInput } from "@actions/core";
+import { getInput, getMultilineInput, InputOptions } from "@actions/core";
 import { Runtime, Tag } from "@aws-sdk/client-apprunner";
 
 // supported GitHub action modes
@@ -76,6 +76,11 @@ function getInputStr(name: string, defaultValue: string): string {
     return getInput(name, { required: false, trimWhitespace: true }) || defaultValue;
 }
 
+function getOptionalInputStr(name: string, options?: InputOptions): string | undefined {
+    const value = getInput(name, { required: false, ...options })
+    return (value.length > 0) ? value : undefined
+}
+
 function getInputBool(name: string, defaultValue: boolean): boolean {
     const val = getInput(name, { required: false, trimWhitespace: true });
     if (!val) {
@@ -124,7 +129,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     const tags = getInput('tags', { required: false })
 
-    const autoScalingConfigArn = getInput('auto-scaling-config-arn', { required: false, trimWhitespace: true });
+    const autoScalingConfigArn = getOptionalInputStr('auto-scaling-config-arn', { trimWhitespace: true });
 
     return {
         action,
