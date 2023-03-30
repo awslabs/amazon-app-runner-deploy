@@ -8,8 +8,6 @@ import { createOrUpdateService, findExistingService, waitToStabilize } from "./a
 export async function run(): Promise<void> {
 
     try {
-        info(`Amazon App Runner GitHub action version: ${process.env.npm_package_version}`);
-        
         // Parse action configuration information into a strongly typed object
         const config = getConfig();
 
@@ -46,6 +44,8 @@ export async function run(): Promise<void> {
 }
 
 if (require.main === module) {
+    info(`Amazon App Runner GitHub action version: ${process.env.npm_package_version ?? 'undefined'}`);
+
     run().then(() => {
         info('App Runner step - DONE!');
     }).catch(err => {
