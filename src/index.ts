@@ -3,6 +3,7 @@ import { AppRunnerClient } from "@aws-sdk/client-apprunner";
 import { debug } from '@actions/core';
 import { getConfig } from "./action-configuration";
 import { createOrUpdateService, findExistingService, waitToStabilize } from "./action-helper-functions";
+import { version as package_version } from "../package.json";
 
 // GitHub action handler function
 export async function run(): Promise<void> {
@@ -44,6 +45,8 @@ export async function run(): Promise<void> {
 }
 
 if (require.main === module) {
+    info(`Version: ${package_version ?? 'undefined'}`);
+
     run().then(() => {
         info('App Runner step - DONE!');
     }).catch(err => {
