@@ -45,7 +45,7 @@ export async function run(): Promise<void> {
 }
 
 if (require.main === module) {
-    info(`Amazon App Runner GitHub action version: ${package_version ?? 'undefined'}`);
+    info(`Version: ${package_version ?? 'undefined'}`);
 
     run().then(() => {
         info('App Runner step - DONE!');
