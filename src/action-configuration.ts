@@ -1,4 +1,4 @@
-import { getInput, getMultilineInput } from "@actions/core";
+import { getInput, getMultilineInput, InputOptions } from "@actions/core";
 import { Runtime, Tag } from "@aws-sdk/client-apprunner";
 
 // supported GitHub action modes
@@ -35,6 +35,7 @@ export interface ICreateOrUpdateActionParams {
     memory: number;
     environment?: Record<string, string>;
     tags: Tag[]
+    autoScalingConfigArn?: string;
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -73,6 +74,11 @@ function getInputInt(name: string, defaultValue: number, validation?: IValidatio
 
 function getInputStr(name: string, defaultValue: string): string {
     return getInput(name, { required: false, trimWhitespace: true }) || defaultValue;
+}
+
+function getOptionalInputStr(name: string, options?: InputOptions): string | undefined {
+    const value = getInput(name, { required: false, ...options })
+    return (value.length > 0) ? value : undefined
 }
 
 function getInputBool(name: string, defaultValue: boolean): boolean {
@@ -123,6 +129,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     const tags = getInput('tags', { required: false })
 
+    const autoScalingConfigArn = getOptionalInputStr('auto-scaling-config-arn', { trimWhitespace: true });
+
     return {
         action,
         serviceName,
@@ -135,6 +143,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
         environment: getEnvironmentVariables(envVarNames),
         tags: getTags(tags),
+        autoScalingConfigArn: autoScalingConfigArn,
     };
 }
 

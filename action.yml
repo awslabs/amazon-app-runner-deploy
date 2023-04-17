@@ -62,6 +62,9 @@ inputs:
   tags:
     description: 'key-value pairs to associate with the service. This input should be JSON-formatted, for example { "env": "test" }'
     required: false
+  auto-scaling-config-arn:
+    description: 'ARN of an App Runner automatic scaling configuration that you want to associate with the App Runner service'
+    required: false
 outputs:
   service-id:
     description: 'App Runner service ID'

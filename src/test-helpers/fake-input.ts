@@ -18,6 +18,7 @@ export interface FakeInput {
     cpu?: string;
     memory?: string;
     tags?: string;
+    'auto-scaling-config-arn'?: string;
 }
 
 export function getFakeInput(config: FakeInput, name: string, options?: InputOptions): string {
