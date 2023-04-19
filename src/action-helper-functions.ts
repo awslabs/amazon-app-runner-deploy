@@ -17,7 +17,7 @@ export interface IExistingService {
 }
 
 // Wait in milliseconds (helps to implement exponential retries)
-function sleep(ms: number) {
+function sleep(ms: number): Promise<unknown> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -81,7 +81,7 @@ async function listOperations(client: AppRunnerClient, serviceArn: string): Prom
   return listOperationsResponse.OperationSummaryList
 }
 
-export async function validateAndExtractServiceInfo(config: IActionParams, service?: Service, operationId?: string) {
+export async function validateAndExtractServiceInfo(config: IActionParams, service?: Service, operationId?: string): Promise<IServiceInfo> {
     if (!service) {
         throw new Error(`Failed to create or update service ${config.serviceName} - App Runner Client returned an empty response`);
     }

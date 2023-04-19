@@ -62,7 +62,7 @@ export function getListOperationsCommand(serviceArn: string): ListOperationsComm
 }
 
 // Determine ECR image repository type
-function getImageType(imageUri: string) {
+function getImageType(imageUri: string): ImageRepositoryType {
     return imageUri.startsWith("public.ecr") ? ImageRepositoryType.ECR_PUBLIC : ImageRepositoryType.ECR
 }
 

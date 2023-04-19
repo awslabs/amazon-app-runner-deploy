@@ -1,6 +1,6 @@
 {
   "name": "aws-actions-app-runner-deploy-service",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Registers and deploys the application as AppRunner service.",
   "main": "./dist/index.js",
   "scripts": {
@@ -26,21 +26,21 @@
   "homepage": "https://github.com/awslabs/amazon-app-runner-deploy#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@aws-sdk/client-apprunner": "^3.301.0",
-    "@aws-sdk/node-http-handler": "^3.296.0",
+    "@aws-sdk/client-apprunner": "^3.315.0",
+    "@aws-sdk/node-http-handler": "^3.310.0",
     "yaml": "^2.2.1"
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",
-    "@types/jest": "^29.5.0",
-    "@typescript-eslint/eslint-plugin": "^5.57.0",
-    "@typescript-eslint/parser": "^5.57.0",
-    "esbuild": "^0.17.14",
-    "eslint": "^8.37.0",
+    "@types/jest": "^29.5.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
+    "esbuild": "^0.17.17",
+    "eslint": "^8.38.0",
     "jest": "^29.5.0",
-    "ts-jest": "^29.0.5",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
-    "type-fest": "^3.7.2",
-    "typescript": "^5.0.2"
+    "type-fest": "^3.8.0",
+    "typescript": "^5.0.4"
   }
 }
