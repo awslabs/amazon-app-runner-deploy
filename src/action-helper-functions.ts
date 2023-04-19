@@ -1,13 +1,14 @@
 import { info } from "@actions/core";
-import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus, OperationStatus, UpdateServiceResponse, OperationSummary } from "@aws-sdk/client-apprunner";
 import { IActionParams } from "./action-configuration";
-import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand, getTagResourceCommand } from "./client-apprunner-commands";
+import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand, getTagResourceCommand, getListOperationsCommand } from "./client-apprunner-commands";
 
 // Core service attributes to be returned to the calling GitHub action handler code
 export interface IServiceInfo {
     ServiceId: string;
     ServiceArn: string;
     ServiceUrl: string;
+    OperationId?: string;
 }
 
 export interface IExistingService {
@@ -16,7 +17,7 @@ export interface IExistingService {
 }
 
 // Wait in milliseconds (helps to implement exponential retries)
-function sleep(ms: number) {
+function sleep(ms: number): Promise<unknown> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -52,11 +53,10 @@ async function createService(client: AppRunnerClient, config: IActionParams): Pr
 }
 
 // Update an existing service
-async function updateService(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<Service | undefined> {
+async function updateService(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<UpdateServiceResponse> {
     info(`Updating existing service ${config.serviceName} (${serviceArn})`);
     const command = getUpdateCommand(serviceArn, config);
-    const updateServiceResponse = await client.send(command);
-    return updateServiceResponse.Service;
+    return await client.send(command);
 }
 
 async function updateTag(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<void> {
@@ -75,7 +75,13 @@ async function deleteService(client: AppRunnerClient, config: IActionParams, ser
     info(`Delete service response: ${JSON.stringify(deleteServiceResponse.Service)}`);
 }
 
-export async function validateAndExtractServiceInfo(config: IActionParams, service?: Service) {
+async function listOperations(client: AppRunnerClient, serviceArn: string): Promise<OperationSummary[] | undefined> {
+  const command = getListOperationsCommand(serviceArn);
+  const listOperationsResponse = await client.send(command);
+  return listOperationsResponse.OperationSummaryList
+}
+
+export async function validateAndExtractServiceInfo(config: IActionParams, service?: Service, operationId?: string): Promise<IServiceInfo> {
     if (!service) {
         throw new Error(`Failed to create or update service ${config.serviceName} - App Runner Client returned an empty response`);
     }
@@ -105,12 +111,14 @@ export async function validateAndExtractServiceInfo(config: IActionParams, servi
         ServiceId: serviceId,
         ServiceArn: serviceArn,
         ServiceUrl: serviceUrl,
+        OperationId: operationId,
     };
 }
 
 // Create or update an existing service, depending on whether it already exists
 export async function createOrUpdateService(client: AppRunnerClient, config: IActionParams, existingService?: IExistingService): Promise<IServiceInfo> {
     let service: Service | undefined = undefined;
+    let operationId: string | undefined = undefined;
     if (existingService) {
         info(`Existing service info: ${JSON.stringify(existingService)}`);
         if (existingService.Status === ServiceStatus.CREATE_FAILED) {
@@ -123,13 +131,15 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
             }
         } else {
             await updateTag(client, config, existingService.ServiceArn);
-            service = await updateService(client, config, existingService.ServiceArn);
+            const response = await updateService(client, config, existingService.ServiceArn);
+            service = response.Service;
+            operationId = response.OperationId;
         }
     } else {
         service = await createService(client, config);
     }
 
-    return validateAndExtractServiceInfo(config, service);
+    return validateAndExtractServiceInfo(config, service, operationId);
 }
 
 async function describeService(client: AppRunnerClient, serviceArn: string): Promise<IExistingService> {
@@ -144,6 +154,17 @@ async function describeService(client: AppRunnerClient, serviceArn: string): Pro
         ServiceArn: serviceArn,
         Status: service.Status as ServiceStatus,
     };
+}
+
+export async function checkOperationIsSucceeded(client: AppRunnerClient, serviceArn: string, operationId: string): Promise<void> {
+    const operations = await listOperations(client, serviceArn);
+    if (operations) {
+      for (const operation of operations) {
+        if (operationId === operation.Id && operation.Status !== OperationStatus.SUCCEEDED) {
+          throw new Error(`Operation ${operationId} is not successful. Its current status is ${operation.Status}`);
+        }
+      }
+    }
 }
 
 // Wait for the service to reach a stable state
