@@ -34,6 +34,7 @@ export interface ICreateOrUpdateActionParams {
     cpu: number;
     memory: number;
     environment?: Record<string, string>;
+    environmentSecret?: Record<string, string>;
     tags: Tag[]
     autoScalingConfigArn?: string;
 }
@@ -127,6 +128,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     const envVarNames = getMultilineInput('copy-env-vars', { required: false });
 
+    const secretEnvVarNames = getMultilineInput('copy-secret-env-vars', { required: false });
+
     const tags = getInput('tags', { required: false })
 
     const autoScalingConfigArn = getOptionalInputStr('auto-scaling-config-arn', { trimWhitespace: true });
@@ -142,6 +145,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         memory,
         sourceConfig: imageUri ? getImageConfig(imageUri) : getSourceCodeConfig(),
         environment: getEnvironmentVariables(envVarNames),
+        environmentSecret: getEnvironmentVariables(secretEnvVarNames),
         tags: getTags(tags),
         autoScalingConfigArn: autoScalingConfigArn,
     };

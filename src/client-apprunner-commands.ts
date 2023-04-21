@@ -10,8 +10,8 @@ export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateSer
         },
         AutoScalingConfigurationArn: config.autoScalingConfigArn,
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')
-            ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment)
-            : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment),
+            ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment, config.environmentSecret)
+            : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment, config.environmentSecret),
         Tags: config.tags,
     });
 }
@@ -25,8 +25,8 @@ export function getUpdateCommand(serviceArn: string, config: ICreateOrUpdateActi
         },
         AutoScalingConfigurationArn: config.autoScalingConfigArn,
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')
-            ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment)
-            : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment),
+            ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment, config.environmentSecret)
+            : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment, config.environmentSecret),
     });
 }
 
@@ -66,7 +66,7 @@ function getImageType(imageUri: string): ImageRepositoryType {
     return imageUri.startsWith("public.ecr") ? ImageRepositoryType.ECR_PUBLIC : ImageRepositoryType.ECR
 }
 
-function getCodeSourceConfiguration(port: number, config: ICodeConfiguration, runtimeEnvironmentVariables?: Record<string, string>): SourceConfiguration {
+function getCodeSourceConfiguration(port: number, config: ICodeConfiguration, runtimeEnvironmentVariables?: Record<string, string>, runtimeEnvironmentSecrets?: Record<string, string>): SourceConfiguration {
     return {
         AuthenticationConfiguration: {
             ConnectionArn: config.sourceConnectionArn,
@@ -86,13 +86,14 @@ function getCodeSourceConfiguration(port: number, config: ICodeConfiguration, ru
                     StartCommand: config.startCommand,
                     Port: `${port}`,
                     RuntimeEnvironmentVariables: runtimeEnvironmentVariables,
+                    RuntimeEnvironmentSecrets: runtimeEnvironmentSecrets,
                 },
             },
         },
     };
 }
 
-function getImageSourceConfiguration(port: number, config: IImageConfiguration, runtimeEnvironmentVariables?: Record<string, string>): SourceConfiguration {
+function getImageSourceConfiguration(port: number, config: IImageConfiguration, runtimeEnvironmentVariables?: Record<string, string>, runtimeEnvironmentSecrets?: Record<string, string>): SourceConfiguration {
     return {
         AuthenticationConfiguration: {
             AccessRoleArn: config.accessRoleArn
@@ -103,6 +104,7 @@ function getImageSourceConfiguration(port: number, config: IImageConfiguration, 
             ImageConfiguration: {
                 Port: `${port}`,
                 RuntimeEnvironmentVariables: runtimeEnvironmentVariables,
+                RuntimeEnvironmentSecrets: runtimeEnvironmentSecrets,
             }
         }
     };
