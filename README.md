@@ -66,6 +66,7 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         env:
           SERVER_PORT: 80
+          SECRET_ENV: secret_env
         with:
           service: app-runner-git-deploy-service
           source-connection-arn: ${{ secrets.AWS_CONNECTION_SOURCE_ARN }}
@@ -83,6 +84,9 @@ jobs:
           wait-for-service-stability-seconds: 600
           copy-env-vars: |
             SERVER_PORT
+          copy-secret-env-vars: |
+            SECRET_ENV
+          instance-role-arn: ${{ secrets.INSTANCE_ROLE_ARN }}
           tags: >
             { "env": "test" }
       
