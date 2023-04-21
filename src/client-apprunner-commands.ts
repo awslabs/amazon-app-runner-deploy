@@ -7,6 +7,7 @@ export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateSer
         InstanceConfiguration: {
             Cpu: `${config.cpu} vCPU`,
             Memory: `${config.memory} GB`,
+            InstanceRoleArn: config.instanceRoleArn,
         },
         AutoScalingConfigurationArn: config.autoScalingConfigArn,
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')
@@ -22,6 +23,7 @@ export function getUpdateCommand(serviceArn: string, config: ICreateOrUpdateActi
         InstanceConfiguration: {
             Cpu: `${config.cpu} vCPU`,
             Memory: `${config.memory} GB`,
+            InstanceRoleArn: config.instanceRoleArn,
         },
         AutoScalingConfigurationArn: config.autoScalingConfigArn,
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')

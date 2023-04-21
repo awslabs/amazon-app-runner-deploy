@@ -37,6 +37,7 @@ export interface ICreateOrUpdateActionParams {
     environmentSecret?: Record<string, string>;
     tags: Tag[]
     autoScalingConfigArn?: string;
+    instanceRoleArn?: string;
 }
 
 export type IActionParams = ICreateOrUpdateActionParams;
@@ -134,6 +135,8 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
 
     const autoScalingConfigArn = getOptionalInputStr('auto-scaling-config-arn', { trimWhitespace: true });
 
+    const instanceRoleArn = getOptionalInputStr('instance-role-arn', { trimWhitespace: true });
+
     return {
         action,
         serviceName,
@@ -148,6 +151,7 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
         environmentSecret: getEnvironmentVariables(secretEnvVarNames),
         tags: getTags(tags),
         autoScalingConfigArn: autoScalingConfigArn,
+        instanceRoleArn: instanceRoleArn,
     };
 }
 

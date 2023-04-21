@@ -13,6 +13,9 @@ inputs:
   access-role-arn:
     description: 'ARN for IAM Role, if the App Runner service is configured with ECR image'
     required: false
+  instance-role-arn:
+    description: 'ARN for IAM Role, if the App Runner application accesses AWS resources'
+    required: false
   repo:
     description: 'GitHub source repository URL. Cannot be set when "image" parameter is set.'
     required: false
