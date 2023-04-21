@@ -5,6 +5,7 @@ export interface FakeInput {
     service?: string;
     'source-connection-arn'?: string;
     'access-role-arn'?: string;
+    'instance-role-arn'?: string;
     repo?: string;
     image?: string;
     runtime?: string;

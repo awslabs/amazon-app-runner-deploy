@@ -15,6 +15,7 @@ const SERVICE_NAME = "serviceName";
 const SERVICE_ARN = "serviceArn";
 const SOURCE_ARN_CONNECTION = "sourceArnConnection";
 const ACCESS_ROLE_ARN = "accessRoleArn";
+const INSTANCE_ROLE_ARN = "instanceRoleArn";
 const AUTO_SCALING_CONFIG_ARN = "autoScalingConfigArn";
 const REPO = "repo";
 const PUBLIC_DOCKER_IMAGE = "public.ecr.aws/bitnami/node:latest";
@@ -219,6 +220,7 @@ describe('Deploy to AppRunner', () => {
             service: SERVICE_NAME,
             "source-connection-arn": SOURCE_ARN_CONNECTION,
             "access-role-arn": ACCESS_ROLE_ARN,
+            "instance-role-arn": INSTANCE_ROLE_ARN,
             repo: REPO,
             runtime: RUNTIME,
             "build-command": BUILD_COMMAND,
@@ -251,6 +253,7 @@ describe('Deploy to AppRunner', () => {
                 InstanceConfiguration: {
                     Cpu: `1 vCPU`,
                     Memory: `2 GB`,
+                    InstanceRoleArn: INSTANCE_ROLE_ARN,
                 },
                 SourceConfiguration: {
                     AuthenticationConfiguration: {
@@ -654,6 +657,7 @@ describe('Deploy to AppRunner', () => {
         const inputConfig: FakeInput = {
             service: SERVICE_NAME,
             "access-role-arn": ACCESS_ROLE_ARN,
+            "instance-role-arn": INSTANCE_ROLE_ARN,
             image: PUBLIC_DOCKER_IMAGE,
         };
         const multiLineInputConfig = {
@@ -685,6 +689,7 @@ describe('Deploy to AppRunner', () => {
                 InstanceConfiguration: {
                     Cpu: `1 vCPU`,
                     Memory: `2 GB`,
+                    InstanceRoleArn: INSTANCE_ROLE_ARN,
                 },
                 SourceConfiguration: {
                     AuthenticationConfiguration: {
