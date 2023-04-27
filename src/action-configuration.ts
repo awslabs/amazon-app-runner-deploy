@@ -47,13 +47,13 @@ interface IValidationRules {
     max?: number;
 }
 
-function getOptionalInputInt(name: string, validation?: IValidationRules): number | undefined {
+function getOptionalInputNumber(name: string, validation?: IValidationRules): number | undefined {
     const val = getInput(name, { required: false, trimWhitespace: true });
     if (!val) {
         return undefined;
     }
 
-    const result = Number.parseInt(val);
+    const result = Number(val);
 
     if (isNaN(result)) {
         throw new Error(`${name} value is not a valid number: ${val}`);
@@ -70,8 +70,8 @@ function getOptionalInputInt(name: string, validation?: IValidationRules): numbe
     return result;
 }
 
-function getInputInt(name: string, defaultValue: number, validation?: IValidationRules): number {
-    return getOptionalInputInt(name, validation) ?? defaultValue;
+function getInputNumber(name: string, defaultValue: number, validation?: IValidationRules): number {
+    return getOptionalInputNumber(name, validation) ?? defaultValue;
 }
 
 function getInputStr(name: string, defaultValue: string): string {
@@ -109,20 +109,20 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     const serviceName = getInput('service', { required: true, trimWhitespace: true });
 
     // Port number - 80
-    const port = getInputInt('port', 80);
+    const port = getInputNumber('port', 80);
 
     // Region - us-east-1
     const region = getInputStr('region', 'us-east-1');
 
     // Wait for service to complete the creation/update - false
     const waitForService = getInputBool('wait-for-service-stability', false);
-    const waitTimeout = getOptionalInputInt('wait-for-service-stability-seconds', { min: 10, max: 3600 });
+    const waitTimeout = getOptionalInputNumber('wait-for-service-stability-seconds', { min: 10, max: 3600 });
 
     // CPU - 1 vCPU
-    const cpu = getInputInt('cpu', 1);
+    const cpu = getInputNumber('cpu', 1);
 
     // Memory - 2GB
-    const memory = getInputInt('memory', 2);
+    const memory = getInputNumber('memory', 2);
 
     // Source docker image URL - this will switch between deploying source code or docker image
     const imageUri = getInput('image', { required: false, trimWhitespace: true });
