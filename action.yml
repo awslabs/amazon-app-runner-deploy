@@ -13,6 +13,9 @@ inputs:
   access-role-arn:
     description: 'ARN for IAM Role, if the App Runner service is configured with ECR image'
     required: false
+  instance-role-arn:
+    description: 'ARN for IAM Role, if the App Runner application accesses AWS resources'
+    required: false
   repo:
     description: 'GitHub source repository URL. Cannot be set when "image" parameter is set.'
     required: false
@@ -58,6 +61,9 @@ inputs:
     required: false
   copy-env-vars:
     description: 'Multiline list of pipeline environment variables to be copied over to the App Runner service environment'
+    required: false
+  copy-secret-env-vars:
+    description: 'Multiline list of pipeline environment variables to be copied over to the App Runner service secret environment'
     required: false
   tags:
     description: 'key-value pairs to associate with the service. This input should be JSON-formatted, for example { "env": "test" }'

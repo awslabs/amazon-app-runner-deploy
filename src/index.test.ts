@@ -4,7 +4,7 @@
 import { jest, expect, test, describe } from '@jest/globals';
 import { getInput, getMultilineInput, info, setFailed, setOutput } from '@actions/core';
 import { run } from '.';
-import { FakeInput, getFakeInput } from './test-helpers/fake-input';
+import { FakeInput, FakeMultilineInput, getFakeInput, getFakeMultilineInput } from './test-helpers/fake-input';
 import { AppRunnerClient, CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, ServiceStatus, UpdateServiceCommand, TagResourceCommand, ListOperationsCommand, OperationStatus } from '@aws-sdk/client-apprunner';
 
 jest.mock('@actions/core');
@@ -15,6 +15,7 @@ const SERVICE_NAME = "serviceName";
 const SERVICE_ARN = "serviceArn";
 const SOURCE_ARN_CONNECTION = "sourceArnConnection";
 const ACCESS_ROLE_ARN = "accessRoleArn";
+const INSTANCE_ROLE_ARN = "instanceRoleArn";
 const AUTO_SCALING_CONFIG_ARN = "autoScalingConfigArn";
 const REPO = "repo";
 const PUBLIC_DOCKER_IMAGE = "public.ecr.aws/bitnami/node:latest";
@@ -207,6 +208,7 @@ describe('Deploy to AppRunner', () => {
         process.env = {
             ...originalEnv,
             TEST_ENV_VAR: 'test env var value',
+            TEST_SECRET_ENV_VAR: '/test/secret_env'
         };
     });
     afterEach(() => {
@@ -218,6 +220,7 @@ describe('Deploy to AppRunner', () => {
             service: SERVICE_NAME,
             "source-connection-arn": SOURCE_ARN_CONNECTION,
             "access-role-arn": ACCESS_ROLE_ARN,
+            "instance-role-arn": INSTANCE_ROLE_ARN,
             repo: REPO,
             runtime: RUNTIME,
             "build-command": BUILD_COMMAND,
@@ -227,12 +230,16 @@ describe('Deploy to AppRunner', () => {
             tags: TAGS,
         };
 
+        const multiLineInputConfig: FakeMultilineInput = {
+            'copy-env-vars': ['TEST_ENV_VAR'],
+            'copy-secret-env-vars': ['TEST_SECRET_ENV_VAR'],
+        }
+
         getInputMock.mockImplementation((name) => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return (['TEST_ENV_VAR']);
+            return getFakeMultilineInput(multiLineInputConfig, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -246,6 +253,7 @@ describe('Deploy to AppRunner', () => {
                 InstanceConfiguration: {
                     Cpu: `1 vCPU`,
                     Memory: `2 GB`,
+                    InstanceRoleArn: INSTANCE_ROLE_ARN,
                 },
                 SourceConfiguration: {
                     AuthenticationConfiguration: {
@@ -268,6 +276,9 @@ describe('Deploy to AppRunner', () => {
                                 RuntimeEnvironmentVariables: {
                                     TEST_ENV_VAR: 'test env var value',
                                 },
+                                RuntimeEnvironmentSecrets: {
+                                    TEST_SECRET_ENV_VAR: '/test/secret_env'
+                                }
                             },
                         },
                     },
@@ -310,8 +321,7 @@ describe('Deploy to AppRunner', () => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return ([]);
+            return getFakeMultilineInput({} as FakeMultilineInput, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -348,6 +358,7 @@ describe('Deploy to AppRunner', () => {
                                 StartCommand: START_COMMAND,
                                 Port: '8443',
                                 RuntimeEnvironmentVariables: undefined,
+                                RuntimeEnvironmentSecrets: undefined,
                             },
                         },
                     },
@@ -380,12 +391,12 @@ describe('Deploy to AppRunner', () => {
             port: PORT,
             "wait-for-service-stability": 'true',
         };
+
         getInputMock.mockImplementation((name) => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return ([]);
+            return getFakeMultilineInput({} as FakeMultilineInput, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -421,6 +432,7 @@ describe('Deploy to AppRunner', () => {
                                 StartCommand: START_COMMAND,
                                 Port: PORT,
                                 RuntimeEnvironmentVariables: undefined,
+                                RuntimeEnvironmentSecrets: undefined,
                             },
                         },
                     },
@@ -465,8 +477,7 @@ describe('Deploy to AppRunner', () => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return ([]);
+            return getFakeMultilineInput({} as FakeMultilineInput, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -514,6 +525,7 @@ describe('Deploy to AppRunner', () => {
                                 StartCommand: START_COMMAND,
                                 Port: PORT,
                                 RuntimeEnvironmentVariables: undefined,
+                                RuntimeEnvironmentSecrets: undefined,
                             },
                         },
                     },
@@ -544,8 +556,7 @@ describe('Deploy to AppRunner', () => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return ([]);
+            return getFakeMultilineInput({} as FakeMultilineInput, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -569,6 +580,7 @@ describe('Deploy to AppRunner', () => {
                         ImageConfiguration: {
                             Port: PORT,
                             RuntimeEnvironmentVariables: undefined,
+                            RuntimeEnvironmentSecrets: undefined,
                         },
                     },
                 },
@@ -598,8 +610,7 @@ describe('Deploy to AppRunner', () => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return ([]);
+            return getFakeMultilineInput({} as FakeMultilineInput, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -623,6 +634,7 @@ describe('Deploy to AppRunner', () => {
                         ImageConfiguration: {
                             Port: PORT,
                             RuntimeEnvironmentVariables: undefined,
+                            RuntimeEnvironmentSecrets: undefined,
                         },
                     },
                 },
@@ -645,15 +657,19 @@ describe('Deploy to AppRunner', () => {
         const inputConfig: FakeInput = {
             service: SERVICE_NAME,
             "access-role-arn": ACCESS_ROLE_ARN,
+            "instance-role-arn": INSTANCE_ROLE_ARN,
             image: PUBLIC_DOCKER_IMAGE,
         };
+        const multiLineInputConfig = {
+            'copy-env-vars': ['_NON_EXISTENT_VAR_'],
+            'copy-secret-env-vars': ['_NON_EXISTENT_SECRET_VAR_']
+        }
 
         getInputMock.mockImplementation((name) => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return (['_NON_EXISTENT_VAR_']);
+            return getFakeMultilineInput(multiLineInputConfig, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -673,6 +689,7 @@ describe('Deploy to AppRunner', () => {
                 InstanceConfiguration: {
                     Cpu: `1 vCPU`,
                     Memory: `2 GB`,
+                    InstanceRoleArn: INSTANCE_ROLE_ARN,
                 },
                 SourceConfiguration: {
                     AuthenticationConfiguration: {
@@ -684,6 +701,7 @@ describe('Deploy to AppRunner', () => {
                         ImageConfiguration: {
                             Port: PORT,
                             RuntimeEnvironmentVariables: undefined,
+                            RuntimeEnvironmentSecrets: undefined,
                         },
                     },
                 },
@@ -713,8 +731,7 @@ describe('Deploy to AppRunner', () => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return ([]);
+            return getFakeMultilineInput({} as FakeMultilineInput, name);
         });
 
         const nextToken = 'next-token';
@@ -752,6 +769,7 @@ describe('Deploy to AppRunner', () => {
                         ImageConfiguration: {
                             Port: PORT,
                             RuntimeEnvironmentVariables: undefined,
+                            RuntimeEnvironmentSecrets: undefined,
                         },
                     },
                 },
@@ -777,13 +795,16 @@ describe('Deploy to AppRunner', () => {
             image: PUBLIC_DOCKER_IMAGE,
             "wait-for-service-stability": 'true',
         };
+        const multiLineInputConfig = {
+            'copy-env-vars': ['_NON_EXISTENT_VAR_'],
+            'copy-secret-env-vars': ['_NON_EXISTENT_SECRET_VAR_']
+        }
 
         getInputMock.mockImplementation((name) => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return (['_NON_EXISTENT_VAR_']);
+            return getFakeMultilineInput(multiLineInputConfig, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -814,6 +835,7 @@ describe('Deploy to AppRunner', () => {
                         ImageConfiguration: {
                             Port: PORT,
                             RuntimeEnvironmentVariables: undefined,
+                            RuntimeEnvironmentSecrets: undefined,
                         },
                     },
                 },
@@ -846,13 +868,16 @@ describe('Deploy to AppRunner', () => {
             "access-role-arn": ACCESS_ROLE_ARN,
             image: PUBLIC_DOCKER_IMAGE,
         };
+        const multiLineInputConfig = {
+            'copy-env-vars': ['_NON_EXISTENT_VAR_'],
+            'copy-secret-env-vars': ['_NON_EXISTENT_SECRET_VAR_'],
+        }
 
         getInputMock.mockImplementation((name) => {
             return getFakeInput(inputConfig, name);
         });
         getMultilineInputMock.mockImplementation((name) => {
-            expect(name).toEqual('copy-env-vars');
-            return (['_NON_EXISTENT_VAR_']);
+            return getFakeMultilineInput(multiLineInputConfig, name);
         });
 
         mockSendDef.mockImplementationOnce(async (cmd: ListServicesCommand) => {
@@ -901,6 +926,7 @@ describe('Deploy to AppRunner', () => {
                         ImageConfiguration: {
                             Port: PORT,
                             RuntimeEnvironmentVariables: undefined,
+                            RuntimeEnvironmentSecrets: undefined,
                         },
                     },
                 },
