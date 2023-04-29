@@ -47,13 +47,15 @@ interface IValidationRules {
     max?: number;
 }
 
-function getOptionalInputNumber(name: string, validation?: IValidationRules): number | undefined {
+function getOptionalInputNumber(name: string, { validation, intOnly }: { validation?: IValidationRules, intOnly?: boolean } = {}): number | undefined {
     const val = getInput(name, { required: false, trimWhitespace: true });
     if (!val) {
         return undefined;
     }
 
-    const result = Number(val);
+    const result = intOnly
+      ? Number.parseInt(val)
+      : Number.parseFloat(val);
 
     if (isNaN(result)) {
         throw new Error(`${name} value is not a valid number: ${val}`);
@@ -70,8 +72,8 @@ function getOptionalInputNumber(name: string, validation?: IValidationRules): nu
     return result;
 }
 
-function getInputNumber(name: string, defaultValue: number, validation?: IValidationRules): number {
-    return getOptionalInputNumber(name, validation) ?? defaultValue;
+function getInputNumber(name: string, defaultValue: number, { validation, intOnly }: { validation?: IValidationRules, intOnly?: boolean } = {}): number {
+    return getOptionalInputNumber(name, { validation, intOnly }) ?? defaultValue;
 }
 
 function getInputStr(name: string, defaultValue: string): string {
@@ -109,14 +111,14 @@ function getCreateOrUpdateConfig(): ICreateOrUpdateActionParams {
     const serviceName = getInput('service', { required: true, trimWhitespace: true });
 
     // Port number - 80
-    const port = getInputNumber('port', 80);
+    const port = getInputNumber('port', 80, { intOnly: true });
 
     // Region - us-east-1
     const region = getInputStr('region', 'us-east-1');
 
     // Wait for service to complete the creation/update - false
     const waitForService = getInputBool('wait-for-service-stability', false);
-    const waitTimeout = getOptionalInputNumber('wait-for-service-stability-seconds', { min: 10, max: 3600 });
+    const waitTimeout = getOptionalInputNumber('wait-for-service-stability-seconds', { validation: { min: 10, max: 3600 }, intOnly: true });
 
     // CPU - 1 vCPU
     const cpu = getInputNumber('cpu', 1);

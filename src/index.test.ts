@@ -4,6 +4,7 @@
 import { jest, expect, test, describe } from '@jest/globals';
 import { getInput, getMultilineInput, info, setFailed, setOutput } from '@actions/core';
 import { run } from '.';
+import { getConfig } from './action-configuration';
 import { FakeInput, FakeMultilineInput, getFakeInput, getFakeMultilineInput } from './test-helpers/fake-input';
 import { AppRunnerClient, CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, ServiceStatus, UpdateServiceCommand, TagResourceCommand, ListOperationsCommand, OperationStatus } from '@aws-sdk/client-apprunner';
 
@@ -59,6 +60,36 @@ describe('Input Validation', () => {
 
         await run();
         expect(setFailedMock).toHaveBeenCalledWith('cpu value is not a valid number: not-a-number');
+    });
+
+    test('cpu and memory are allowed a float', async () => {
+      const getMultilineInputMock = jest.mocked(getMultilineInput);
+      const inputConfig: FakeInput = {
+        cpu: '0.25',
+        memory: '0.5',
+        service: SERVICE_NAME,
+        "source-connection-arn": SOURCE_ARN_CONNECTION,
+        "access-role-arn": ACCESS_ROLE_ARN,
+        "instance-role-arn": INSTANCE_ROLE_ARN,
+        repo: REPO,
+        runtime: RUNTIME,
+        "build-command": BUILD_COMMAND,
+        "start-command": START_COMMAND,
+        port: PORT,
+        "wait-for-service-stability": 'false',
+      };
+
+      getMultilineInputMock.mockImplementation((name) => {
+        return getFakeMultilineInput({} as FakeMultilineInput, name);
+      });
+
+      getInputMock.mockImplementation((name) => {
+        return getFakeInput(inputConfig, name);
+      });
+
+      const config = getConfig()
+      expect(config.cpu).toEqual(0.25)
+      expect(config.memory).toEqual(0.5)
     });
 
     test('Both Docker image and source code repo provided', async () => {
