@@ -75,8 +75,6 @@ describe('Input Validation', () => {
         runtime: RUNTIME,
         "build-command": BUILD_COMMAND,
         "start-command": START_COMMAND,
-        port: PORT,
-        "wait-for-service-stability": 'false',
       };
 
       getMultilineInputMock.mockImplementation((name) => {
@@ -90,6 +88,36 @@ describe('Input Validation', () => {
       const config = getConfig()
       expect(config.cpu).toEqual(0.25)
       expect(config.memory).toEqual(0.5)
+    });
+
+    test('port and wait-for-service-stability must be int', async () => {
+      const getMultilineInputMock = jest.mocked(getMultilineInput);
+      const inputConfig: FakeInput = {
+        cpu: '0.25',
+        memory: '0.5',
+        service: SERVICE_NAME,
+        "source-connection-arn": SOURCE_ARN_CONNECTION,
+        "access-role-arn": ACCESS_ROLE_ARN,
+        "instance-role-arn": INSTANCE_ROLE_ARN,
+        repo: REPO,
+        runtime: RUNTIME,
+        "build-command": BUILD_COMMAND,
+        "start-command": START_COMMAND,
+        port: '2.5',
+        'wait-for-service-stability-seconds': '12.5',
+      };
+
+      getMultilineInputMock.mockImplementation((name) => {
+        return getFakeMultilineInput({} as FakeMultilineInput, name);
+      });
+
+      getInputMock.mockImplementation((name) => {
+        return getFakeInput(inputConfig, name);
+      });
+
+      const config = getConfig()
+      expect(config.port).toEqual(2)
+      expect(config.waitTimeout).toEqual(12)
     });
 
     test('Both Docker image and source code repo provided', async () => {
