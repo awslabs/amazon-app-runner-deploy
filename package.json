@@ -26,7 +26,7 @@
   "homepage": "https://github.com/awslabs/amazon-app-runner-deploy#readme",
   "dependencies": {
     "@actions/core": "^1.10.1",
-    "@aws-sdk/client-apprunner": "^3.438.0",
+    "@aws-sdk/client-apprunner": "^3.575.0",
     "@aws-sdk/node-http-handler": "^3.370.0",
     "yaml": "^2.3.3"
   },
